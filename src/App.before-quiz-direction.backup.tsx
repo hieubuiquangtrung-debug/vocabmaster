@@ -3363,11 +3363,6 @@ function FlashcardMode({ activeSet, onBack }) {
 function QuizMode({ activeSet, onFinish, onBack }) {
   const terms = activeSet.terms || [];
 
-  // null = chưa chọn kiểu quiz
-  // 'meaning' = English → Vietnamese
-  // 'term' = Vietnamese → English
-  const [quizType, setQuizType] = useState(null);
-
   const [questionQueue, setQuestionQueue] = useState(() => [...terms]);
   const [retryQueue, setRetryQueue] = useState([]);
   const [currentIndex, setCurrentIndex] = useState(0);
@@ -3380,70 +3375,31 @@ function QuizMode({ activeSet, onFinish, onBack }) {
 
   const currentTerm = questionQueue[currentIndex];
 
-  // Tạo 4 đáp án theo kiểu Quiz đã chọn
   useEffect(() => {
-    if (!currentTerm || !quizType) return;
+    if (!currentTerm) return;
+const distractors = terms
+  .filter((t) => t.id !== currentTerm.id)
+  .map((t) => t.meaning)
+  .filter(Boolean)
+  .sort(() => Math.random() - 0.5)
+  .slice(0, 3);
 
-    let correctAnswer = '';
-    let distractors = [];
-
-    if (quizType === 'meaning') {
-      // English → Vietnamese
-      correctAnswer = currentTerm.meaning || '';
-
-      distractors = terms
-        .filter((t) => t.id !== currentTerm.id)
-        .map((t) => t.meaning)
-        .filter(Boolean)
-        .sort(() => Math.random() - 0.5)
-        .slice(0, 3);
-    } else {
-      // Vietnamese → English
-      correctAnswer = currentTerm.term || '';
-
-      distractors = terms
-        .filter((t) => t.id !== currentTerm.id)
-        .map((t) => t.term)
-        .filter(Boolean)
-        .sort(() => Math.random() - 0.5)
-        .slice(0, 3);
-    }
-
-    setOptions(
-      [correctAnswer, ...distractors].sort(
-        () => Math.random() - 0.5
-      )
-    );
-
+setOptions(
+  [currentTerm.meaning, ...distractors].sort(
+    () => Math.random() - 0.5
+  )
+);
     setSelectedOption(null);
     setIsAnswered(false);
-  }, [currentIndex, questionQueue, activeSet, quizType]);
-
-  const handleStartQuiz = (type) => {
-    setQuizType(type);
-
-    // Reset Quiz
-    setQuestionQueue([...terms]);
-    setRetryQueue([]);
-    setCurrentIndex(0);
-    setFirstTryScore(0);
-    setAttemptedIds([]);
-    setSelectedOption(null);
-    setIsAnswered(false);
-  };
+  }, [currentIndex, questionQueue, activeSet]);
 
   const handleSelectOption = (opt) => {
-    if (isAnswered || !currentTerm || !quizType) return;
+    if (isAnswered || !currentTerm) return;
 
     setSelectedOption(opt);
     setIsAnswered(true);
 
-    const correctAnswer =
-      quizType === 'meaning'
-        ? currentTerm.meaning
-        : currentTerm.term;
-
-    const isCorrect = opt === correctAnswer;
+const isCorrect = opt === currentTerm.meaning;
     const hasAttempted = attemptedIds.includes(currentTerm.id);
 
     if (!hasAttempted) {
@@ -3479,131 +3435,14 @@ function QuizMode({ activeSet, onFinish, onBack }) {
 
       onFinish({
         mode: 'quiz',
-        quizType,
         score: finalScore,
         total: terms.length,
-        timeSeconds: Math.round(
-          (Date.now() - startTime) / 1000
-        ),
+        timeSeconds: Math.round((Date.now() - startTime) / 1000),
       });
     }, 1000);
   };
 
-  // =========================================================
-  // SCREEN 1: CHỌN KIỂU QUIZ
-  // =========================================================
-  if (!quizType) {
-    return (
-      <div className="max-w-2xl mx-auto px-4 py-8 space-y-6">
-
-        {/* Header */}
-        <div className="flex items-center justify-between">
-          <button
-            onClick={onBack}
-            type="button"
-            className="flex items-center gap-2 px-3 py-2 rounded-xl text-sm font-bold text-slate-500 hover:bg-rose-50 hover:text-rose-500 transition"
-          >
-            <ArrowLeft className="w-4 h-4" />
-            Quay lại
-          </button>
-        </div>
-
-        {/* Title */}
-        <div className="text-center py-4">
-          <div className="text-5xl mb-4">📝</div>
-
-          <h2 className="text-2xl sm:text-3xl font-black text-slate-800">
-            Bạn muốn kiểm tra gì?
-          </h2>
-
-          <p className="mt-2 text-sm sm:text-base text-slate-500">
-            Chọn cách luyện phù hợp với bạn nhé!
-          </p>
-        </div>
-
-        {/* Quiz choices */}
-        <div className="space-y-4">
-
-          {/* English → Vietnamese */}
-          <button
-            type="button"
-            onClick={() => handleStartQuiz('meaning')}
-            className="group w-full text-left p-6 rounded-3xl border-2 border-violet-200 bg-gradient-to-br from-violet-50 via-white to-indigo-50 hover:border-violet-400 hover:shadow-lg hover:-translate-y-1 transition-all"
-          >
-            <div className="flex items-center gap-4">
-
-              <div className="w-16 h-16 shrink-0 rounded-2xl bg-violet-100 flex items-center justify-center text-3xl group-hover:scale-105 transition">
-                🇬🇧
-              </div>
-
-              <div className="min-w-0 flex-1">
-                <p className="text-xs font-black uppercase tracking-wider text-violet-500">
-                  English → Vietnamese
-                </p>
-
-                <h3 className="mt-1 text-xl font-black text-slate-800">
-                  KIỂM TRA NGHĨA
-                </h3>
-
-                <p className="mt-1 text-sm text-slate-500">
-                  Nhìn từ tiếng Anh và chọn nghĩa tiếng Việt đúng.
-                </p>
-
-                <p className="mt-3 text-sm font-bold text-violet-600">
-                  huge → rất lớn, khổng lồ
-                </p>
-              </div>
-
-              <ArrowRight className="w-6 h-6 text-violet-400 shrink-0 group-hover:translate-x-1 transition" />
-            </div>
-          </button>
-
-          {/* Vietnamese → English */}
-          <button
-            type="button"
-            onClick={() => handleStartQuiz('term')}
-            className="group w-full text-left p-6 rounded-3xl border-2 border-sky-200 bg-gradient-to-br from-sky-50 via-white to-cyan-50 hover:border-sky-400 hover:shadow-lg hover:-translate-y-1 transition-all"
-          >
-            <div className="flex items-center gap-4">
-
-              <div className="w-16 h-16 shrink-0 rounded-2xl bg-sky-100 flex items-center justify-center text-3xl group-hover:scale-105 transition">
-                🇻🇳
-              </div>
-
-              <div className="min-w-0 flex-1">
-                <p className="text-xs font-black uppercase tracking-wider text-sky-500">
-                  Vietnamese → English
-                </p>
-
-                <h3 className="mt-1 text-xl font-black text-slate-800">
-                  KIỂM TRA TỪ
-                </h3>
-
-                <p className="mt-1 text-sm text-slate-500">
-                  Nhìn nghĩa tiếng Việt và chọn từ tiếng Anh đúng.
-                </p>
-
-                <p className="mt-3 text-sm font-bold text-sky-600">
-                  rất lớn, khổng lồ → huge
-                </p>
-              </div>
-
-              <ArrowRight className="w-6 h-6 text-sky-400 shrink-0 group-hover:translate-x-1 transition" />
-            </div>
-          </button>
-
-        </div>
-      </div>
-    );
-  }
-
-  // Không có từ để làm Quiz
   if (!currentTerm) return null;
-
-  const correctAnswer =
-    quizType === 'meaning'
-      ? currentTerm.meaning
-      : currentTerm.term;
 
   const progress = Math.round(
     ((currentIndex + 1) / questionQueue.length) * 100
@@ -3611,22 +3450,15 @@ function QuizMode({ activeSet, onFinish, onBack }) {
 
   return (
     <div className="max-w-2xl mx-auto px-4 py-5 space-y-6">
-
-      {/* Progress */}
       <div className="bg-white rounded-3xl border-2 border-indigo-100 p-4 shadow-sm">
         <div className="flex justify-between items-center gap-3 mb-4">
-
           <button
-            onClick={() => {
-              if (window.confirm('Bạn muốn thoát bài kiểm tra?')) {
-                setQuizType(null);
-              }
-            }}
+            onClick={onBack}
             type="button"
             className="flex items-center gap-2 px-3 py-2 rounded-xl text-sm font-bold text-slate-500 hover:bg-rose-50 hover:text-rose-500 transition"
           >
             <ArrowLeft className="w-4 h-4" />
-            Đổi kiểu kiểm tra
+            Thoát
           </button>
 
           <span className="px-3 py-1.5 rounded-full bg-indigo-50 text-indigo-600 text-xs font-extrabold">
@@ -3646,80 +3478,57 @@ function QuizMode({ activeSet, onFinish, onBack }) {
         </p>
       </div>
 
-      {/* Question */}
       <div className="relative overflow-hidden bg-gradient-to-br from-violet-500 via-indigo-500 to-blue-500 p-6 sm:p-8 rounded-[2rem] shadow-lg shadow-indigo-200 text-center text-white">
-
         <div className="absolute -top-8 -right-6 w-28 h-28 rounded-full bg-white/10" />
         <div className="absolute -bottom-10 -left-6 w-32 h-32 rounded-full bg-white/10" />
 
         <div className="relative">
-
           <span className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-white/20 text-xs font-extrabold tracking-wide">
-            ✨ {quizType === 'meaning'
-              ? 'CHỌN NGHĨA ĐÚNG'
-              : 'CHỌN TỪ ĐÚNG'}
-          </span>
+  ✨ {questionQueue.length < terms.length
+    ? 'LUYỆN LẠI TỪ CHƯA NHỚ'
+    : 'CHỌN NGHĨA ĐÚNG'}
+</span>
 
-          {/* =========================================
-              KIỂM TRA NGHĨA: English + Example
-              ========================================= */}
-          {quizType === 'meaning' ? (
-            <>
-              <h2 className="mt-6 text-3xl sm:text-4xl font-black tracking-tight break-words">
-                {currentTerm.term}
-              </h2>
+          <div className="text-center">
 
-              {currentTerm.example && (
-                <p className="mt-4 text-base sm:text-lg text-white/90 font-semibold italic leading-relaxed">
-                  "{currentTerm.example}"
-                </p>
-              )}
+  <VocabularyImage
+    term={currentTerm}
+    className="w-40 h-40 mx-auto mb-5"
+  />
 
-              <button
-                onClick={() => speakWord(currentTerm.term)}
-                className="mt-5 inline-flex items-center justify-center gap-2 px-5 py-3 rounded-2xl bg-white text-indigo-600 font-extrabold shadow-md hover:scale-105 transition"
-                type="button"
-              >
-                <Volume2 className="w-5 h-5" />
-                Nghe phát âm
-              </button>
+  <h2 className="text-5xl sm:text-6xl font-black text-white">
+    {currentTerm.term}
+  </h2>
 
-              <p className="mt-5 text-sm text-white/80 font-medium">
-                Chọn nghĩa tiếng Việt chính xác nhé!
-              </p>
-            </>
-          ) : (
-            /* =========================================
-               KIỂM TRA TỪ: Vietnamese → English
-               Không hiện Example
-               ========================================= */
-            <>
-              <p className="mt-6 text-xs font-bold uppercase tracking-wider text-white/70">
-                Nghĩa tiếng Việt
-              </p>
+  {currentTerm.example && (
+    <p className="mt-4 text-lg sm:text-xl font-medium text-white/85 italic">
+      "{currentTerm.example}"
+    </p>
+  )}
 
-              <h2 className="mt-2 text-2xl sm:text-3xl font-black tracking-tight break-words">
-                {currentTerm.meaning}
-              </h2>
+</div>
 
-              <p className="mt-5 text-sm text-white/80 font-medium">
-                Chọn từ tiếng Anh chính xác nhé!
-              </p>
-            </>
-          )}
+          <button
+            onClick={() => speakWord(currentTerm.term)}
+            className="mt-4 inline-flex items-center justify-center gap-2 px-5 py-3 rounded-2xl bg-white text-indigo-600 font-extrabold shadow-md hover:scale-105 transition"
+            type="button"
+          >
+            <Volume2 className="w-5 h-5" />
+            Nghe phát âm
+          </button>
 
+          <p className="mt-5 text-sm text-white/80 font-medium">
+            Chọn nghĩa chính xác nhé!
+          </p>
         </div>
       </div>
 
-      {/* Options */}
       <div className="space-y-3">
-
         <p className="text-sm font-extrabold text-slate-500 px-1">
           CHỌN MỘT ĐÁP ÁN
         </p>
 
         {options.map((opt, idx) => {
-
           const colors = [
             'border-violet-200 hover:border-violet-400 hover:bg-violet-50',
             'border-sky-200 hover:border-sky-400 hover:bg-sky-50',
@@ -3727,22 +3536,15 @@ function QuizMode({ activeSet, onFinish, onBack }) {
             'border-pink-200 hover:border-pink-400 hover:bg-pink-50',
           ];
 
-          let style =
-            `bg-white ${colors[idx % colors.length]} text-slate-700`;
+          let style = `bg-white ${colors[idx % colors.length]} text-slate-700`;
 
           if (isAnswered) {
-
-            if (opt === correctAnswer) {
-              style =
-                'bg-emerald-500 border-emerald-500 text-white shadow-lg';
-
+            if (opt === currentTerm.meaning) {
+              style = 'bg-emerald-500 border-emerald-500 text-white shadow-lg';
             } else if (opt === selectedOption) {
-              style =
-                'bg-rose-500 border-rose-500 text-white';
-
+              style = 'bg-rose-500 border-rose-500 text-white';
             } else {
-              style =
-                'bg-slate-50 border-slate-100 text-slate-300 opacity-60';
+              style = 'bg-slate-50 border-slate-100 text-slate-300 opacity-60';
             }
           }
 
@@ -3755,338 +3557,137 @@ function QuizMode({ activeSet, onFinish, onBack }) {
               className={`w-full min-h-[68px] p-4 rounded-2xl border-2 font-bold text-base sm:text-lg text-left transition-all flex justify-between items-center gap-3 ${style}`}
             >
               <span className="flex items-center gap-3">
-
                 <span className="w-9 h-9 shrink-0 rounded-xl bg-black/5 flex items-center justify-center text-sm font-black">
                   {String.fromCharCode(65 + idx)}
                 </span>
-
                 <span>{opt}</span>
-
               </span>
 
-              {isAnswered && opt === correctAnswer && (
-                <Check className="w-6 h-6 shrink-0" />
-              )}
+              {isAnswered && opt === currentTerm.meaning && (
+  <Check className="w-6 h-6 shrink-0" />
+)}
 
-              {isAnswered &&
-                opt === selectedOption &&
-                opt !== correctAnswer && (
-                  <span className="text-xl font-black">✕</span>
-                )}
+{isAnswered &&
+  opt === selectedOption &&
+  opt !== currentTerm.meaning && (
+    <span className="text-xl font-black">✕</span>
+  )}
             </button>
           );
         })}
       </div>
 
-      {/* Feedback */}
       {isAnswered && (
         <div
           className={`p-5 rounded-2xl border-2 text-center ${
-            selectedOption === correctAnswer
+            selectedOption === currentTerm.meaning
               ? 'bg-emerald-50 border-emerald-200 text-emerald-700'
               : 'bg-rose-50 border-rose-200 text-rose-700'
           }`}
         >
-
           <div className="text-3xl mb-2">
-            {selectedOption === correctAnswer ? '🎉' : '💪'}
+            {selectedOption === currentTerm.meaning ? '🎉' : '💪'}
           </div>
 
           <p className="text-lg font-black">
-            {selectedOption === correctAnswer
+            {selectedOption === currentTerm.meaning
               ? 'Chính xác! Tuyệt vời!'
               : 'Chưa đúng rồi, hãy ghi nhớ nhé!'}
           </p>
 
-          {selectedOption !== correctAnswer && (
+          {selectedOption !== currentTerm.meaning && (
             <p className="mt-2 text-sm font-semibold">
-              Đáp án đúng: {correctAnswer}
+              Đáp án đúng: {currentTerm.meaning}
             </p>
           )}
 
           <p className="mt-2 text-xs font-medium opacity-75">
-            {selectedOption === correctAnswer
+            {selectedOption === currentTerm.meaning
               ? 'Bạn đang tiến bộ từng chút một! ⭐'
               : 'Từ này sẽ xuất hiện lại để bạn luyện tập.'}
           </p>
-
         </div>
       )}
-
     </div>
   );
 }
 
 function MatchingMode({ activeSet, onFinish, onBack }) {
-  const terms = activeSet.terms || [];
-
-  const shuffleArray = (array) =>
-    [...array].sort(() => Math.random() - 0.5);
-
-  // Toàn bộ các từ chưa được luyện trong session này
-  const [initialMatchingData] = useState(() => {
-  const shuffled = shuffleArray(terms);
-
-  return {
-    round: shuffled.slice(0, 8),
-    remaining: shuffled.slice(8)
-  };
-});
-
-const [remainingTerms, setRemainingTerms] = useState(
-  initialMatchingData.remaining
-);
-
-const [roundTerms, setRoundTerms] = useState(
-  initialMatchingData.round
-);
-
   const [cards, setCards] = useState([]);
   const [selectedFirst, setSelectedFirst] = useState(null);
   const [matchedIds, setMatchedIds] = useState([]);
-  const [completedIds, setCompletedIds] = useState([]);
-  const [roundNumber, setRoundNumber] = useState(1);
   const [startTime] = useState(Date.now());
 
-  // =========================================================
-  // TẠO CARDS CHO ROUND HIỆN TẠI
-  // =========================================================
+  const terms = activeSet.terms || [];
+
   useEffect(() => {
-    if (!roundTerms.length) return;
+    // Take maximum 6 terms for matching grid
+    const sampleTerms = terms.slice(0, 8);
+    const termCards = sampleTerms.map(t => ({ id: `term-${t.id}`, termId: t.id, text: t.term, type: 'term' }));
+const defCards = sampleTerms.map(t => ({
+  id: `meaning-${t.id}`,
+  termId: t.id,
+  text: t.meaning,
+  type: 'meaning'
+}));
+    const shuffled = [...termCards, ...defCards].sort(() => 0.5 - Math.random());
+    setCards(shuffled);
+  }, [activeSet]);
 
-    const termCards = roundTerms.map((t) => ({
-      id: `term-${t.id}`,
-      termId: t.id,
-      text: t.term,
-      type: 'term'
-    }));
-
-    const meaningCards = roundTerms.map((t) => ({
-      id: `meaning-${t.id}`,
-      termId: t.id,
-      text: t.meaning || t.definition,
-      type: 'meaning'
-    }));
-
-    const shuffledCards = shuffleArray([
-      ...termCards,
-      ...meaningCards
-    ]);
-
-    setCards(shuffledCards);
-    setMatchedIds([]);
-    setSelectedFirst(null);
-  }, [roundTerms]);
-
-  // =========================================================
-  // BẮT ĐẦU ROUND TIẾP THEO
-  // =========================================================
-  const startNextRound = (newCompletedIds) => {
-    if (remainingTerms.length === 0) {
-      const timeSeconds = Math.round(
-        (Date.now() - startTime) / 1000
-      );
-
-      onFinish({
-        mode: 'matching',
-        score: newCompletedIds.length,
-        total: terms.length,
-        timeSeconds
-      });
-
-      return;
-    }
-
-    const nextRound = remainingTerms.slice(0, 8);
-    const nextRemaining = remainingTerms.slice(8);
-
-    setCompletedIds(newCompletedIds);
-    setRemainingTerms(nextRemaining);
-    setRoundTerms(nextRound);
-    setRoundNumber((prev) => prev + 1);
-  };
-
-  // =========================================================
-  // CLICK CARD
-  // =========================================================
   const handleCardClick = (card) => {
-    // Không cho chọn card đã ghép
     if (matchedIds.includes(card.termId)) return;
-
-    // Không cho click chính card đang được chọn
     if (selectedFirst?.id === card.id) return;
 
-    // Chọn card đầu tiên
     if (!selectedFirst) {
       setSelectedFirst(card);
       playAudioFeedback('flip');
       return;
     }
 
-    // =======================================================
-    // MATCH ĐÚNG
-    // =======================================================
-    if (
-      selectedFirst.termId === card.termId &&
-      selectedFirst.type !== card.type
-    ) {
+    // Check Match
+    if (selectedFirst.termId === card.termId && selectedFirst.type !== card.type) {
       playAudioFeedback('correct');
-
-      const newMatchedIds = [
-        ...matchedIds,
-        card.termId
-      ];
-
-      setMatchedIds(newMatchedIds);
+      const newMatched = [...matchedIds, card.termId];
+      setMatchedIds(newMatched);
       setSelectedFirst(null);
 
-      // Kiểm tra round hiện tại đã hoàn thành chưa
-      if (newMatchedIds.length === roundTerms.length) {
-        const newCompletedIds = [
-          ...completedIds,
-          ...roundTerms.map((term) => term.id)
-        ];
-
+      // Check Completion
+      if (newMatched.length === Math.min(terms.length, 8)) {
+        const timeSeconds = Math.round((Date.now() - startTime) / 1000);
         setTimeout(() => {
-          startNextRound(newCompletedIds);
-        }, 700);
+          onFinish({
+            mode: 'matching',
+            score: newMatched.length,
+            total: newMatched.length,
+            timeSeconds
+          });
+        }, 500);
       }
-
-      return;
+    } else {
+      playAudioFeedback('incorrect');
+      setSelectedFirst(card);
     }
-
-    // =======================================================
-    // MATCH SAI
-    // =======================================================
-    playAudioFeedback('incorrect');
-
-    // Chọn card mới làm card đầu tiên
-    setSelectedFirst(card);
   };
-
-  // =========================================================
-  // EMPTY STATE
-  // =========================================================
-  if (!terms.length) {
-    return (
-      <div className="max-w-md mx-auto text-center py-16">
-        <div className="text-5xl mb-4">🧩</div>
-
-        <h2 className="text-xl font-black text-slate-800">
-          Chưa có từ để luyện
-        </h2>
-
-        <button
-          onClick={onBack}
-          className="mt-6 px-5 py-3 rounded-xl bg-indigo-600 text-white font-bold"
-        >
-          Quay lại
-        </button>
-      </div>
-    );
-  }
-
-  const totalCompleted = completedIds.length + matchedIds.length;
-
-  const totalTerms = terms.length;
-
-  const progress = Math.round(
-    (totalCompleted / totalTerms) * 100
-  );
 
   return (
     <div className="max-w-3xl mx-auto space-y-6">
-
-      {/* =====================================================
-          HEADER
-          ===================================================== */}
-      <div className="flex flex-wrap justify-between items-center gap-3">
-
-        <button
-          onClick={onBack}
-          className="flex items-center gap-1 text-sm font-semibold text-slate-500 hover:text-slate-800"
-        >
-          <ArrowLeft className="w-4 h-4" />
-          Bỏ cuộc
+      <div className="flex justify-between items-center">
+        <button onClick={onBack} className="flex items-center gap-1 text-sm font-semibold text-slate-500 hover:text-slate-800">
+          <ArrowLeft className="w-4 h-4" /> Bỏ cuộc
         </button>
-
-        <div className="text-right">
-
-          <p className="text-xs font-bold text-slate-400">
-            VÒNG {roundNumber}
-          </p>
-
-          <p className="text-sm font-black text-slate-600">
-            Đã ghép: {totalCompleted} / {totalTerms}
-          </p>
-
-        </div>
+        <span className="text-xs font-bold text-slate-500">
+          Đã ghép: {matchedIds.length} / {Math.min(terms.length, 8)}
+        </span>
       </div>
 
-      {/* =====================================================
-          PROGRESS BAR
-          ===================================================== */}
-      <div className="bg-white rounded-2xl border border-slate-200 p-4 shadow-sm">
-
-        <div className="flex justify-between items-center mb-2">
-
-          <span className="text-xs font-bold text-slate-500">
-            Tiến độ
-          </span>
-
-          <span className="text-xs font-black text-indigo-600">
-            {progress}%
-          </span>
-
-        </div>
-
-        <div className="h-3 bg-slate-100 rounded-full overflow-hidden">
-
-          <div
-            className="h-full bg-gradient-to-r from-violet-500 via-indigo-500 to-sky-400 rounded-full transition-all duration-500"
-            style={{
-              width: `${progress}%`
-            }}
-          />
-
-        </div>
-
-      </div>
-
-      {/* =====================================================
-          ROUND INFO
-          ===================================================== */}
-      <div className="text-center">
-
-        <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-indigo-50 text-indigo-600 text-xs font-black">
-          🧩 GHÉP {roundTerms.length} CẶP
-        </div>
-
-        <p className="mt-2 text-sm text-slate-400">
-          Tìm đúng cặp từ và nghĩa nhé!
-        </p>
-
-      </div>
-
-      {/* =====================================================
-          MATCHING GRID
-          ===================================================== */}
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-
         {cards.map((card) => {
-
-          const isMatched =
-            matchedIds.includes(card.termId);
-
-          const isSelected =
-            selectedFirst?.id === card.id;
+          const isMatched = matchedIds.includes(card.termId);
+          const isSelected = selectedFirst?.id === card.id;
 
           if (isMatched) {
             return (
-              <div
-                key={card.id}
-                className="h-24 bg-slate-100 rounded-2xl border border-slate-200 opacity-20 flex items-center justify-center p-2 text-center"
-              >
+              <div key={card.id} className="h-24 bg-slate-100 rounded-2xl border border-slate-200 opacity-20 flex items-center justify-center p-2 text-center">
                 <Check className="w-6 h-6 text-emerald-500" />
               </div>
             );
@@ -4097,8 +3698,8 @@ const [roundTerms, setRoundTerms] = useState(
               key={card.id}
               onClick={() => handleCardClick(card)}
               className={`h-24 p-3 rounded-2xl border-2 font-bold text-xs sm:text-sm shadow-sm transition flex items-center justify-center text-center ${
-                isSelected
-                  ? 'bg-indigo-600 border-indigo-600 text-white scale-105 shadow-md'
+                isSelected 
+                  ? 'bg-indigo-600 border-indigo-600 text-white scale-105 shadow-md' 
                   : 'bg-white border-slate-200 hover:border-indigo-300 text-slate-800'
               }`}
             >
@@ -4106,26 +3707,7 @@ const [roundTerms, setRoundTerms] = useState(
             </button>
           );
         })}
-
       </div>
-
-      {/* =====================================================
-          ROUND STATUS
-          ===================================================== */}
-      <div className="text-center text-xs text-slate-400 font-medium">
-
-        {remainingTerms.length > 0 ? (
-          <>
-            Còn {remainingTerms.length} từ ở các vòng tiếp theo.
-          </>
-        ) : (
-          <>
-            Đây là vòng cuối cùng! 🎉
-          </>
-        )}
-
-      </div>
-
     </div>
   );
 }
