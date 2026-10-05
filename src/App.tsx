@@ -68,11 +68,13 @@ const firebaseConfig = {
   measurementId: "G-JJFZ6D0RR1"
 };
 
+// Danh sách Lớp / Nhóm mặc định
+
+
 const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
 const db = getFirestore(app);
 const appId = typeof __app_id !== 'undefined' ? __app_id : 'vocab-master-app';
-
 const playAudioFeedback = (type) => {
   try {
     const ctx = new (window.AudioContext || window.webkitAudioContext)();
@@ -208,6 +210,162 @@ export default function App() {
   const [isTeacherLoggedIn, setIsTeacherLoggedIn] = useState(false);
   const [sets, setSets] = useState([]);
   const [selectedSetId, setSelectedSetId] = useState('');
+  const [setGroups, setSetGroups] = useState([]);
+  const [groupOptions, setGroupOptions] = useState([
+  'Stage 1',
+  'Stage 2',
+  'Stage 3',
+  'Stage 4',
+  'Stage 5'
+]);
+const [newGroupName, setNewGroupName] = useState('');
+const GROUPS_DOC_ID = 'vocab_groups';
+
+const handleAddGroup = async () => {
+  const name = newGroupName.trim();
+
+  if (!name) {
+    alert('Vui lòng nhập tên lớp / nhóm!');
+    return;
+  }
+
+  const exists = groupOptions.some(
+    (group) => group.toLowerCase() === name.toLowerCase()
+  );
+
+  if (exists) {
+    alert('Lớp / nhóm này đã tồn tại!');
+    return;
+  }
+
+  const updatedGroups = [...groupOptions, name];
+
+  try {
+    const groupsRef = doc(
+      db,
+      'artifacts',
+      appId,
+      'public',
+      'data',
+      'config',
+      GROUPS_DOC_ID
+    );
+
+    await setDoc(groupsRef, {
+      groups: updatedGroups,
+      updatedAt: Date.now()
+    });
+
+    setGroupOptions(updatedGroups);
+    setNewGroupName('');
+  } catch (error) {
+    console.error('Error saving vocabulary groups:', error);
+
+    alert(
+      'Lỗi Firestore:\n' +
+      `Code: ${error?.code || 'unknown'}\n` +
+      `Message: ${error?.message || 'unknown'}`
+    );
+  }
+};
+
+const handleDeleteGroup = async (groupName) => {
+  const confirmed = window.confirm(
+    `Bạn có chắc muốn xoá nhóm "${groupName}" không?\n\nNhóm này cũng sẽ được gỡ khỏi các bộ từ vựng và học sinh đang được gán nhóm này.`
+  );
+
+  if (!confirmed) return;
+
+  try {
+    const updatedGroups = groupOptions.filter(
+      (group) => group !== groupName
+    );
+
+    const groupsRef = doc(
+      db,
+      'artifacts',
+      appId,
+      'public',
+      'data',
+      'config',
+      GROUPS_DOC_ID
+    );
+
+    await setDoc(groupsRef, {
+      groups: updatedGroups,
+      updatedAt: Date.now()
+    });
+
+    setGroupOptions(updatedGroups);
+
+    setSetGroups((prev) =>
+      prev.filter((group) => group !== groupName)
+    );
+
+    // Gỡ khỏi vocabulary sets
+    const setsRef = collection(
+      db,
+      'artifacts',
+      appId,
+      'public',
+      'data',
+      'vocab_sets'
+    );
+
+    const setsSnapshot = await getDocs(setsRef);
+
+    await Promise.all(
+      setsSnapshot.docs.map(async (setDoc) => {
+        const setData = setDoc.data();
+
+        const groups = Array.isArray(setData.groups)
+          ? setData.groups
+          : [];
+
+        if (groups.includes(groupName)) {
+          await updateDoc(setDoc.ref, {
+            groups: groups.filter(
+              (group) => group !== groupName
+            )
+          });
+        }
+      })
+    );
+
+    // Gỡ khỏi học sinh
+    const rosterRef = collection(db, 'roster');
+    const rosterSnapshot = await getDocs(rosterRef);
+
+    await Promise.all(
+      rosterSnapshot.docs.map(async (studentDoc) => {
+        const studentData = studentDoc.data();
+
+        const stages = Array.isArray(studentData.stages)
+          ? studentData.stages
+          : [];
+
+        if (stages.includes(groupName)) {
+          await updateDoc(studentDoc.ref, {
+            stages: stages.filter(
+              (stage) => stage !== groupName
+            )
+          });
+        }
+      })
+    );
+
+
+    alert(`Đã xoá nhóm "${groupName}" thành công.`);
+  } catch (error) {
+    console.error('Error deleting group:', error);
+
+    alert(
+      'Không thể xoá nhóm.\n\n' +
+      `Code: ${error?.code || 'unknown'}\n` +
+      `Message: ${error?.message || 'unknown'}`
+    );
+  }
+};
   const [selectedStudent, setSelectedStudent] = useState('');
 const [dateFrom, setDateFrom] = useState('');
 const [dateTo, setDateTo] = useState('');
@@ -228,10 +386,12 @@ const [selectedResultIds, setSelectedResultIds] = useState<string[]>([]);
   const [studentCode, setStudentCode] = useState('');
 const [studentClass, setStudentClass] = useState('');
 const [isStudentVerified, setIsStudentVerified] = useState(false);
+const [studentStages, setStudentStages] = useState([]);
 const [roster, setRoster] = useState([]);
   const [rosterName, setRosterName] = useState('');
   const [rosterCode, setRosterCode] = useState('');
   const [rosterClass, setRosterClass] = useState('');
+  const [rosterStages, setRosterStages] = useState([]);
   const [editingRosterCode, setEditingRosterCode] = useState('');
 // Roster import
 const [importedStudents, setImportedStudents] = useState([]);
@@ -429,10 +589,10 @@ const handleImportRosterStudents = async () => {
     const name = rosterName.trim();
     const className = rosterClass.trim();
 
-    if (!code || !name || !className) {
-      alert('Vui lòng nhập đầy đủ mã học sinh, họ tên và lớp.');
-      return;
-    }
+if (!code || !name || !className || rosterStages.length === 0) {
+  alert('Vui lòng nhập đầy đủ mã học sinh, họ tên, lớp và ít nhất một Stage.');
+  return;
+}
 
     try {
       const studentRef = doc(db, 'roster', editingRosterCode || code);
@@ -447,11 +607,12 @@ const handleImportRosterStudents = async () => {
       }
 
       await setDoc(studentRef, {
-        code: editingRosterCode || code,
-        name,
-        className,
-        updatedAt: Date.now()
-      });
+  code: editingRosterCode || code,
+  name,
+  className,
+  stages: rosterStages,
+  updatedAt: Date.now()
+});
 
       const snapshot = await getDocs(collection(db, 'roster'));
       setRoster(
@@ -464,6 +625,7 @@ const handleImportRosterStudents = async () => {
       setRosterName('');
       setRosterCode('');
       setRosterClass('');
+      setRosterStages([]);
       setEditingRosterCode('');
 
       alert('Đã lưu thông tin học sinh!');
@@ -479,6 +641,7 @@ const handleImportRosterStudents = async () => {
     setRosterCode(student.id);
     setRosterName(student.name || '');
     setRosterClass(student.className || '');
+    setRosterStages(student.stages || []);
   };
 
   // Delete a student
@@ -552,18 +715,20 @@ const verifyStudentCode = async () => {
     const studentSnap = await getDoc(studentRef);
 
     if (!studentSnap.exists()) {
-      setIsStudentVerified(false);
-      setStudentName('');
-      setStudentClass('');
-      alert('Mã học sinh không tồn tại. Vui lòng kiểm tra lại.');
-      return;
-    }
+  setIsStudentVerified(false);
+  setStudentName('');
+  setStudentClass('');
+  setStudentStages([]);
+  alert('Mã học sinh không tồn tại. Vui lòng kiểm tra lại.');
+  return;
+}
 
     const studentData = studentSnap.data();
 
-    setStudentName(studentData.name || '');
-    setStudentClass(studentData.className || '');
-    setIsStudentVerified(true);
+setStudentName(studentData.name || '');
+setStudentClass(studentData.className || '');
+setStudentStages(studentData.stages || []);
+setIsStudentVerified(true);
 
     localStorage.setItem('vocab_student_code', code);
     localStorage.setItem('vocab_student_name', studentData.name || '');
@@ -594,24 +759,53 @@ const verifyStudentCode = async () => {
     setTeacherLoginError('Email hoặc mật khẩu không đúng.');
   }
 };
-
-  useEffect(() => {
-    const initAuth = async () => {
-      try {
-        if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
-          await signInWithCustomToken(auth, __initial_auth_token);
-        } else {
-          await signInAnonymously(auth);
-        }
-      } catch (err) {
-        console.error("Auth error:", err);
+useEffect(() => {
+  const initAuth = async () => {
+    try {
+      if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
+        await signInWithCustomToken(auth, __initial_auth_token);
+      } else {
+        await signInAnonymously(auth);
       }
-    };
-    initAuth();
-    const unsubscribe = onAuthStateChanged(auth, setUser);
-    return () => unsubscribe();
-  }, []);
+    } catch (err) {
+      console.error("Auth error:", err);
+    }
+  };
 
+  initAuth();
+
+  const unsubscribe = onAuthStateChanged(auth, async (currentUser) => {
+    setUser(currentUser);
+
+    if (!currentUser) return;
+
+    try {
+      const groupsRef = doc(
+        db,
+        'artifacts',
+        appId,
+        'public',
+        'data',
+        'config',
+        GROUPS_DOC_ID
+      );
+
+      const groupsSnap = await getDoc(groupsRef);
+
+      if (groupsSnap.exists()) {
+        const data = groupsSnap.data();
+
+        if (Array.isArray(data.groups)) {
+          setGroupOptions(data.groups);
+        }
+      }
+    } catch (error) {
+      console.error('Error loading vocabulary groups:', error);
+    }
+  });
+
+  return () => unsubscribe();
+}, []);
 useEffect(() => {
   if (!user) return;
 
@@ -708,8 +902,20 @@ useEffect(() => {
 }, [user, isTeacherLoggedIn]);
 
   // Selected Set Details
-  const activeSet = sets.find(s => s.id === selectedSetId) || (sets.length > 0 ? sets[0] : null);
-const handleVocabularyImport = (event) => {
+  const studentSets =
+  isStudentVerified && studentStages.length > 0
+    ? sets.filter((set) =>
+        (set.groups || []).some((group) =>
+          studentStages.includes(group)
+        )
+      )
+    : [];
+
+const activeSet =
+  studentSets.find((s) => s.id === selectedSetId) ||
+  (studentSets.length > 0 ? studentSets[0] : null);
+
+  const handleVocabularyImport = (event) => {
   const file = event.target.files?.[0];
 
   if (!file) return;
@@ -883,12 +1089,13 @@ if (validTerms.length < 2)
 
     try {
       const setPayload = {
-        title: setTitle,
-        description: setDescription,
-        terms: validTerms,
-        createdAt: new Date().toISOString(),
-        author: 'Teacher'
-      };
+  title: setTitle,
+  description: setDescription,
+  groups: setGroups,
+  terms: validTerms,
+  createdAt: new Date().toISOString(),
+  author: 'Teacher'
+};
 
       if (editingSetId) {
         const docRef = doc(db, 'artifacts', appId, 'public', 'data', 'vocab_sets', editingSetId);
@@ -902,6 +1109,7 @@ if (validTerms.length < 2)
       // Reset form
       setSetTitle('');
       setSetDescription('');
+      setSetGroups([]);
       setTerms([{ id: '1', term: '', example: '' }]);
       setIsCreatingSet(false);
       setEditingSetId(null);
@@ -915,6 +1123,7 @@ if (validTerms.length < 2)
     setEditingSetId(vocabSet.id);
     setSetTitle(vocabSet.title);
     setSetDescription(vocabSet.description || '');
+    setSetGroups(vocabSet.groups || []);
     setTerms(vocabSet.terms || []);
     setIsCreatingSet(true);
   };
@@ -1139,7 +1348,13 @@ if (validTerms.length < 2)
   setSetTitle={setSetTitle}
   setDescription={setDescription}
   setSetDescription={setSetDescription}
-
+  setGroups={setGroups}
+setSetGroups={setSetGroups}
+groupOptions={groupOptions}
+newGroupName={newGroupName}
+setNewGroupName={setNewGroupName}
+handleAddGroup={handleAddGroup}
+handleDeleteGroup={handleDeleteGroup}
   terms={terms}
   setTerms={setTerms}
   handleAddTermRow={handleAddTermRow}
@@ -1168,6 +1383,8 @@ if (validTerms.length < 2)
   setRosterCode={setRosterCode}
   rosterClass={rosterClass}
   setRosterClass={setRosterClass}
+  rosterStages={rosterStages}
+setRosterStages={setRosterStages}
   editingRosterCode={editingRosterCode}
   setEditingRosterCode={setEditingRosterCode}
   handleSaveRosterStudent={handleSaveRosterStudent}
@@ -1185,7 +1402,7 @@ if (validTerms.length < 2)
         ) : (
           /* ================= STUDENT MODE ================= */
           <StudentArea
-            sets={sets}
+            sets={studentSets}
             selectedSetId={selectedSetId}
             setSelectedSetId={setSelectedSetId}
             activeSet={activeSet}
@@ -1205,9 +1422,15 @@ verifyStudentCode={verifyStudentCode}
       </main>
 
       {/* Footer */}
-      <footer className="bg-white border-t border-slate-200 py-4 text-center text-xs text-slate-500 mt-auto">
-        <p>VocabMaster &copy; {new Date().getFullYear()} - Nền Tảng Tự Học Từ Vựng Tương Tác</p>
-      </footer>
+<footer className="bg-white border-t border-slate-200 py-4 text-center text-xs text-slate-500 mt-auto">
+  <p>
+    VocabMaster &copy; {new Date().getFullYear()} - Nền tảng tự học từ vựng tương tác
+  </p>
+
+  <p className="mt-1 text-slate-400">
+    Phát triển bởi <span className="font-semibold text-indigo-600">Bùi Quang Trung Hiếu</span> (@hieubqt)
+  </p>
+</footer>
     </div>
   );
 }
@@ -1354,6 +1577,13 @@ function TeacherDashboard({
   setSetTitle,
   setDescription,
   setSetDescription,
+  setGroups,
+  setSetGroups,
+  groupOptions,
+  newGroupName,
+  setNewGroupName,
+  handleAddGroup,
+  handleDeleteGroup,
   terms,
   setTerms,
   handleAddTermRow,
@@ -1381,6 +1611,8 @@ function TeacherDashboard({
   setRosterCode,
   rosterClass,
   setRosterClass,
+  rosterStages,
+setRosterStages,
   editingRosterCode,
   setEditingRosterCode,
   handleSaveRosterStudent,
@@ -1394,6 +1626,10 @@ function TeacherDashboard({
 }) {
   const [showQRCode, setShowQRCode] = useState(false);
   const [activeTab, setActiveTab] = useState('sets');
+  const [selectedGroup, setSelectedGroup] = useState('');
+  const filteredSets = selectedGroup
+  ? sets.filter(set => (set.groups || []).includes(selectedGroup))
+  : sets;
     // Bộ lọc kết quả học sinh
 const [selectedStudent, setSelectedStudent] = useState('');
 const [dateFrom, setDateFrom] = useState('');
@@ -1555,7 +1791,26 @@ const handleDeleteSelectedResults = async () => {
           </div>
 
           <form onSubmit={handleSaveSet} className="space-y-6">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+
+{/* TOP ACTION BAR */}
+<div className="flex justify-end gap-3 pb-5 mb-5 border-b border-slate-100">
+  <button
+    type="button"
+    onClick={() => setIsCreatingSet(false)}
+    className="px-5 py-2.5 rounded-xl border border-slate-300 text-slate-600 hover:bg-slate-100 font-medium text-sm transition"
+  >
+    Hủy
+  </button>
+
+  <button
+    type="submit"
+    className="px-6 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-medium text-sm shadow-md transition"
+  >
+    Lưu Bộ Từ Vựng
+  </button>
+</div>
+
+  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
                 <label className="block text-sm font-semibold text-slate-700 mb-1">
                   Tên Bộ Từ Vựng <span className="text-red-500">*</span>
@@ -1582,7 +1837,116 @@ const handleDeleteSelectedResults = async () => {
                 />
               </div>
             </div>
+{/* Vocabulary Groups */}
+<div className="bg-indigo-50/60 border border-indigo-100 rounded-2xl p-5">
+  <div className="mb-4">
+    <h4 className="font-bold text-slate-800 text-sm">
+      Lớp / Nhóm
+    </h4>
 
+    <p className="text-xs text-slate-500 mt-1">
+      Chọn một hoặc nhiều lớp / nhóm được phép sử dụng bộ từ này.
+    </p>
+  </div>
+<div className="flex flex-col sm:flex-row gap-2 mb-4">
+  <input
+    type="text"
+    value={newGroupName}
+    onChange={(e) => setNewGroupName(e.target.value)}
+    onKeyDown={(e) => {
+      if (e.key === 'Enter') {
+        e.preventDefault();
+        handleAddGroup();
+      }
+    }}
+    placeholder="Ví dụ: 3A, 4B, Summer Class..."
+    className="flex-1 px-4 py-2.5 rounded-xl border border-slate-300 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 text-sm outline-none"
+  />
+
+  <button
+    type="button"
+    onClick={handleAddGroup}
+    className="px-4 py-2.5 rounded-xl bg-indigo-600 text-white font-bold text-sm hover:bg-indigo-700 transition"
+  >
+    + Thêm lớp / nhóm
+  </button>
+</div>
+  <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-3">
+    {groupOptions.map((group) => {
+  const isSelected = setGroups.includes(group);
+
+  return (
+    <div
+      key={group}
+      className={`flex items-center gap-2 px-3 py-3 rounded-xl border-2 transition ${
+        isSelected
+          ? 'bg-indigo-600 border-indigo-600 text-white'
+          : 'bg-white border-slate-200 text-slate-700 hover:border-indigo-300'
+      }`}
+    >
+      {/* Checkbox / chọn nhóm */}
+      <label className="flex items-center gap-2 flex-1 min-w-0 cursor-pointer">
+        <input
+          type="checkbox"
+          checked={isSelected}
+          onChange={() => {
+            if (isSelected) {
+              setSetGroups(
+                setGroups.filter((item) => item !== group)
+              );
+            } else {
+              setSetGroups([
+                ...setGroups,
+                group
+              ]);
+            }
+          }}
+          className="sr-only"
+        />
+
+        <span
+          className={`w-5 h-5 shrink-0 rounded-md border flex items-center justify-center text-xs font-black ${
+            isSelected
+              ? 'bg-white text-indigo-600 border-white'
+              : 'bg-white border-slate-300'
+          }`}
+        >
+          {isSelected ? '✓' : ''}
+        </span>
+
+        <span className="text-sm font-bold truncate">
+          {group}
+        </span>
+      </label>
+
+      {/* Xoá nhóm */}
+      <button
+        type="button"
+        onClick={() => handleDeleteGroup(group)}
+        className={`shrink-0 p-1.5 rounded-lg transition ${
+          isSelected
+            ? 'text-white/70 hover:text-white hover:bg-white/20'
+            : 'text-slate-400 hover:text-red-600 hover:bg-red-50'
+        }`}
+        title={`Xoá nhóm "${group}"`}
+      >
+        🗑️
+      </button>
+    </div>
+  );
+})}
+  </div>
+
+  {setGroups.length > 0 ? (
+    <p className="mt-4 text-xs font-semibold text-indigo-600">
+      Đã chọn: {setGroups.join(' · ')}
+    </p>
+  ) : (
+    <p className="mt-4 text-xs text-slate-400">
+      Chưa chọn lớp / nhóm
+    </p>
+  )}
+</div>
             {/* Terms List Input */}
             <div className="space-y-4">
               
@@ -1837,9 +2201,34 @@ const handleDeleteSelectedResults = async () => {
 </div>
 
           {activeTab === 'sets' ? (
-            /* TAB 1: SETS LIST */
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
-              {sets.length === 0 ? (
+
+  /* TAB 1: SETS LIST */
+
+  <>
+    <div className="mb-5 bg-white rounded-2xl border border-slate-200 p-4">
+      <div className="flex flex-col sm:flex-row sm:items-center gap-3">
+        <label className="font-semibold text-slate-700 whitespace-nowrap">
+          Lọc theo lớp / nhóm:
+        </label>
+
+        <select
+          value={selectedGroup}
+          onChange={(e) => setSelectedGroup(e.target.value)}
+          className="flex-1 px-4 py-2.5 rounded-xl border border-slate-300 bg-white text-slate-700 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+        >
+          <option value="">Tất cả lớp / nhóm</option>
+
+          {groupOptions.map((group) => (
+            <option key={group} value={group}>
+              {group}
+            </option>
+          ))}
+        </select>
+      </div>
+    </div>
+
+    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+             {filteredSets.length === 0 ? (
                 <div className="col-span-full py-12 text-center bg-white rounded-2xl border border-dashed border-slate-300">
                   <BookOpen className="w-12 h-12 text-slate-300 mx-auto mb-3" />
                   <p className="text-slate-600 font-medium">Chưa có bộ từ vựng nào được tạo.</p>
@@ -1851,7 +2240,7 @@ const handleDeleteSelectedResults = async () => {
                   </button>
                 </div>
               ) : (
-                sets.map(s => (
+                filteredSets.map(s => (
                   <div 
                     key={s.id} 
                     className={`bg-white rounded-2xl border p-5 shadow-sm hover:shadow-md transition flex flex-col justify-between ${
@@ -1903,6 +2292,8 @@ const handleDeleteSelectedResults = async () => {
                 ))
               )}
             </div>
+          </>
+            
                     ) : activeTab === 'leaderboard' ? (
             /* TAB 2: LEADERBOARD & RESULTS */
             <div className="bg-white rounded-2xl border border-slate-200 overflow-hidden shadow-sm">
@@ -2036,25 +2427,71 @@ const handleDeleteSelectedResults = async () => {
   Xóa kết quả đã chọn ({selectedResultIds.length})
 </button>
 </div>
-                <table className="w-full text-left text-xs sm:text-sm">
+                <table className="w-full table-fixed text-left text-xs sm:text-sm">
+                  <colgroup>
+  <col className="w-[5%]" />
+  <col className="w-[14%]" />
+  <col className="w-[11%]" />
+  <col className="w-[10%]" />
+  <col className="w-[13%]" />
+  <col className="w-[11%]" />
+  <col className="w-[9%]" />
+  <col className="w-[10%]" />
+  <col className="w-[10%]" />
+  <col className="w-[9%]" />
+  <col className="w-[12%]" />
+</colgroup>
                   <thead className="bg-slate-100 text-slate-600 font-semibold uppercase tracking-wider border-b border-slate-200">
-                    <tr>
-  <th className="py-3 px-4">Học Sinh</th>
-  <th className="py-3 px-4">Mã HS</th>
-  <th className="py-3 px-4">Lớp</th>
-  <th className="py-3 px-4">Bộ Từ Vựng</th>
-  <th className="py-3 px-4">Chế Độ</th>
-  <th className="py-3 px-4 text-center">Số Lần Làm</th>
-  <th className="py-3 px-4 text-center">Điểm Cao Nhất</th>
-  <th className="py-3 px-4 text-center">Điểm Gần Nhất</th>
-  <th className="py-3 px-4 text-center">Tỷ Lệ Cao Nhất</th>
-  <th className="py-3 px-4 text-right">Thời Gian</th>
-</tr>
-                  </thead>
+  <tr>
+    <th className="py-3 px-4 text-center w-14">
+      Chọn
+    </th>
+
+    <th className="py-3 px-4">
+      Học Sinh
+    </th>
+
+    <th className="py-3 px-4">
+      Mã HS
+    </th>
+
+    <th className="py-3 px-4">
+      Lớp
+    </th>
+
+    <th className="py-3 px-4">
+      Bộ Từ Vựng
+    </th>
+
+    <th className="py-3 px-4">
+      Chế Độ
+    </th>
+
+    <th className="py-3 px-4 text-center">
+      Số Lần Làm
+    </th>
+
+    <th className="py-3 px-4 text-center">
+      Điểm Cao Nhất
+    </th>
+
+    <th className="py-3 px-4 text-center">
+      Điểm Gần Nhất
+    </th>
+
+    <th className="py-3 px-4 text-center">
+      Tỷ Lệ Cao Nhất
+    </th>
+
+    <th className="py-3 px-4 text-right">
+      Thời Gian
+    </th>
+  </tr>
+</thead>
                   <tbody className="divide-y divide-slate-100">
                     {filteredResults.length === 0 ? (
                       <tr>
-                        <td colSpan="10" className="py-8 text-center text-slate-400">
+                        <td colSpan="11" className="py-8 text-center text-slate-400">
                           Chưa có kết quả nộp bài nào từ học sinh.
                         </td>
                       </tr>
@@ -2209,7 +2646,15 @@ const handleDeleteSelectedResults = async () => {
       </div>
 
       <div className="overflow-x-auto border border-slate-200 rounded-xl">
-        <table className="w-full text-sm text-left">
+        <table className="w-full table-fixed text-sm text-left">
+          <colgroup>
+  <col className="w-[7%]" />
+  <col className="w-[18%]" />
+  <col className="w-[18%]" />
+  <col className="w-[12%]" />
+  <col className="w-[27%]" />
+  <col className="w-[18%]" />
+</colgroup>
           <thead className="bg-slate-50 text-slate-600">
             <tr>
               <th className="p-3">Dòng</th>
@@ -2271,7 +2716,57 @@ const handleDeleteSelectedResults = async () => {
                       className="w-full px-3 py-2 rounded-xl border border-slate-300 text-sm outline-none focus:ring-2 focus:ring-indigo-500 disabled:bg-slate-100"
                     />
                   </div>
+<div className="md:col-span-3">
+  <label className="block text-sm font-semibold text-slate-600 mb-2">
+    Nhóm / chương trình đang học
+  </label>
 
+  <div className="flex flex-wrap gap-3">
+    
+    {groupOptions.map((group) => (
+  <div
+    key={group}
+    className="flex items-center gap-2 px-3 py-2 rounded-xl border border-slate-200 bg-white hover:border-indigo-200 transition"
+  >
+    <label className="flex items-center gap-2 flex-1 cursor-pointer">
+      <input
+  type="checkbox"
+  checked={rosterStages.includes(group)}
+  onChange={(e) => {
+    if (e.target.checked) {
+      setRosterStages((prev) => [...prev, group]);
+    } else {
+      setRosterStages((prev) =>
+        prev.filter((item) => item !== group)
+      );
+    }
+  }}
+  className="w-4 h-4 accent-indigo-600"
+/>
+
+      <span className="text-sm font-semibold text-slate-700">
+        {group}
+      </span>
+    </label>
+
+    <button
+      type="button"
+      onClick={() => handleDeleteGroup(group)}
+      className="p-1.5 rounded-lg text-slate-400 hover:text-red-600 hover:bg-red-50 transition"
+      title={`Xoá nhóm ${group}`}
+    >
+      🗑️
+    </button>
+  </div>
+))}
+  </div>
+
+  {rosterStages.length > 0 && (
+    <p className="mt-2 text-xs text-slate-500">
+      Đã chọn: {rosterStages.join(', ')}
+    </p>
+  )}
+</div>
                   <div>
                     <label className="block text-sm font-semibold text-slate-600 mb-1">
                       Họ và tên
@@ -2338,22 +2833,38 @@ const handleDeleteSelectedResults = async () => {
                 <div className="overflow-x-auto">
                   <table className="w-full text-sm text-left">
                     <thead className="bg-white text-slate-500 border-b border-slate-200">
-                      <tr>
-                        <th className="py-3 px-4 text-center">
-  Chọn
-</th>
-                        <th className="py-3 px-4">Mã học sinh</th>
-                        <th className="py-3 px-4">Họ và tên</th>
-                        <th className="py-3 px-4">Lớp</th>
-                        <th className="py-3 px-4">Thao tác</th>
-                      </tr>
-                    </thead>
+  <tr>
+    <th className="py-3 px-4 text-center w-16">
+      Chọn
+    </th>
+
+    <th className="py-3 px-4">
+      Mã học sinh
+    </th>
+
+    <th className="py-3 px-4">
+      Họ và tên
+    </th>
+
+    <th className="py-3 px-4">
+      Lớp
+    </th>
+
+    <th className="py-3 px-4">
+      Stage / Nhóm
+    </th>
+
+    <th className="py-3 px-4 text-center">
+      Thao tác
+    </th>
+  </tr>
+</thead>
 
                     <tbody className="divide-y divide-slate-100">
                       {roster.length === 0 ? (
                         <tr>
                           <td
-                            colSpan={4}
+                            colSpan={6}
                             className="py-8 text-center text-slate-400"
                           >
                             Chưa có học sinh nào. Hãy thêm học sinh ở biểu mẫu phía trên.
@@ -2371,46 +2882,81 @@ const handleDeleteSelectedResults = async () => {
                             )
                           )
                           .map((student) => (
-                            <tr
-                              key={student.id}
-                              className="hover:bg-slate-50 transition"
-                            >
-                              <td className="py-3 px-4 font-semibold text-indigo-700">
-                                {student.id}
-                              </td>
+                          <tr
+  key={student.id}
+  className="hover:bg-slate-50 transition"
+>
+  {/* Chọn */}
+  <td className="py-3 px-4 text-center align-middle">
+    <input
+      type="checkbox"
+      className="w-4 h-4 accent-indigo-600 cursor-pointer"
+      aria-label={`Chọn ${student.name || student.id}`}
+    />
+  </td>
 
-                              <td className="py-3 px-4 font-medium text-slate-800">
-                                {student.name}
-                              </td>
+  {/* Mã học sinh */}
+  <td className="py-3 px-4 align-middle">
+    <span className="font-semibold text-indigo-700 whitespace-nowrap">
+      {student.id}
+    </span>
+  </td>
 
-                              <td className="py-3 px-4 text-slate-600">
-                                {student.className}
-                              </td>
+  {/* Họ và tên */}
+  <td className="py-3 px-4 align-middle">
+    <span className="font-medium text-slate-800">
+      {student.name}
+    </span>
+  </td>
 
-                              <td className="py-3 px-4">
-                                <div className="flex gap-2">
-                                  <button
-                                    type="button"
-                                    onClick={() =>
-                                      handleEditRosterStudent(student)
-                                    }
-                                    className="px-3 py-1.5 bg-indigo-50 text-indigo-700 hover:bg-indigo-100 rounded-lg text-xs font-bold"
-                                  >
-                                    Sửa
-                                  </button>
+  {/* Lớp */}
+  <td className="py-3 px-4 align-middle">
+    <span className="text-slate-600 whitespace-nowrap">
+      {student.className}
+    </span>
+  </td>
 
-                                  <button
-                                    type="button"
-                                    onClick={() =>
-                                      handleDeleteRosterStudent(student.id)
-                                    }
-                                    className="px-3 py-1.5 bg-red-50 text-red-600 hover:bg-red-100 rounded-lg text-xs font-bold"
-                                  >
-                                    Xóa
-                                  </button>
-                                </div>
-                              </td>
-                            </tr>
+  {/* Stage / Nhóm */}
+  <td className="py-3 px-4 align-middle">
+    <div className="flex flex-wrap gap-1.5">
+      {Array.isArray(student.stages) && student.stages.length > 0 ? (
+        student.stages.map((stage) => (
+          <span
+            key={stage}
+            className="inline-flex items-center px-2.5 py-1 rounded-lg bg-indigo-50 text-indigo-700 text-xs font-semibold whitespace-nowrap"
+          >
+            {stage}
+          </span>
+        ))
+      ) : (
+        <span className="text-xs text-slate-400">
+          Chưa gán nhóm
+        </span>
+      )}
+    </div>
+  </td>
+
+  {/* Thao tác — CHỈ MỘT BỘ */}
+  <td className="py-3 px-4 align-middle">
+    <div className="flex items-center justify-center gap-2">
+      <button
+        type="button"
+        onClick={() => handleEditRosterStudent(student)}
+        className="px-3 py-1.5 bg-indigo-50 text-indigo-700 hover:bg-indigo-100 rounded-lg text-xs font-bold whitespace-nowrap"
+      >
+        Sửa
+      </button>
+
+      <button
+        type="button"
+        onClick={() => handleDeleteRosterStudent(student.id)}
+        className="px-3 py-1.5 bg-red-50 text-red-600 hover:bg-red-100 rounded-lg text-xs font-bold whitespace-nowrap"
+      >
+        Xóa
+      </button>
+    </div>
+  </td>
+</tr>
                           ))
                       )}
                     </tbody>
@@ -2445,7 +2991,7 @@ function StudentArea({
   const [showStudentProgress, setShowStudentProgress] = useState(false);
 
   const isSharedLink = new URLSearchParams(window.location.search).has('set');  
-  if (sets.length === 0) {
+  if (sets.length === 0 && isStudentVerified) {
     return (
       <div className="py-16 text-center max-w-md mx-auto bg-white p-8 rounded-3xl shadow-sm border border-slate-200">
         <BookOpen className="w-16 h-16 text-indigo-300 mx-auto mb-4" />
