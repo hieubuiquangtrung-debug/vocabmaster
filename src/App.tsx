@@ -711,28 +711,41 @@ const verifyStudentCode = async () => {
   }
 
   try {
+    // Đảm bảo Student đã có Firebase Anonymous Auth
+    if (!auth.currentUser) {
+      await signInAnonymously(auth);
+    }
+
     const studentRef = doc(db, 'roster', code);
     const studentSnap = await getDoc(studentRef);
 
     if (!studentSnap.exists()) {
-  setIsStudentVerified(false);
-  setStudentName('');
-  setStudentClass('');
-  setStudentStages([]);
-  alert('Mã học sinh không tồn tại. Vui lòng kiểm tra lại.');
-  return;
-}
+      setIsStudentVerified(false);
+      setStudentName('');
+      setStudentClass('');
+      setStudentStages([]);
+
+      alert('Mã học sinh không tồn tại. Vui lòng kiểm tra lại.');
+      return;
+    }
 
     const studentData = studentSnap.data();
-
-setStudentName(studentData.name || '');
-setStudentClass(studentData.className || '');
-setStudentStages(studentData.stages || []);
-setIsStudentVerified(true);
+   
+    // Load thông tin học sinh
+    setStudentName(studentData.name || '');
+    setStudentClass(studentData.className || '');
+    setStudentStages(studentData.stages || []);
+    setIsStudentVerified(true);
 
     localStorage.setItem('vocab_student_code', code);
-    localStorage.setItem('vocab_student_name', studentData.name || '');
-    localStorage.setItem('vocab_student_class', studentData.className || '');
+    localStorage.setItem(
+      'vocab_student_name',
+      studentData.name || ''
+    );
+    localStorage.setItem(
+      'vocab_student_class',
+      studentData.className || ''
+    );
 
   } catch (error) {
     console.error('Student verification error:', error);
