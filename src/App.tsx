@@ -1127,8 +1127,12 @@ if (validTerms.length < 2)
       setIsCreatingSet(false);
       setEditingSetId(null);
     } catch (err) {
-  console.error("Error saving tracking:", err);
-  alert("Lỗi lưu tracking: " + JSON.stringify(err));
+  console.error("Error saving vocabulary set:", err);
+  alert(
+    "Lỗi lưu bộ từ vựng:\n" +
+    `Code: ${err?.code || 'unknown'}\n` +
+    `Message: ${err?.message || 'unknown'}`
+  );
 }
   };
 
