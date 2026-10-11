@@ -210,6 +210,9 @@ export default function App() {
   const [isTeacherLoggedIn, setIsTeacherLoggedIn] = useState(false);
   const [sets, setSets] = useState([]);
   const [selectedSetId, setSelectedSetId] = useState('');
+  const [vocabTests, setVocabTests] = useState([]);
+  const [vocabTestResults, setVocabTestResults] = useState([]);
+const [testEnabled, setTestEnabled] = useState(false);
   const [setGroups, setSetGroups] = useState([]);
   const [groupOptions, setGroupOptions] = useState([
   'Stage 1',
@@ -835,27 +838,91 @@ useEffect(() => {
     'vocab_sets'
   );
 
+  
+  // =========================
+  // LOAD VOCABULARY TESTS
+  // =========================
+  const testsRef = collection(
+    db,
+    'artifacts',
+    appId,
+    'public',
+    'data',
+    'vocab_tests'
+  );
+
+  const unsubTests = onSnapshot(
+    testsRef,
+    (snapshot) => {
+      const testsData = [];
+
+      snapshot.forEach((testDoc) => {
+        testsData.push({
+          id: testDoc.id,
+          ...testDoc.data()
+        });
+      });
+
+      setVocabTests(testsData);
+    },
+    (error) => {
+      console.error('Error fetching vocabulary tests:', error);
+    }
+  );
+  // =========================
+  // LOAD VOCABULARY TEST RESULTS
+  // =========================
+  const testResultsRef = collection(
+    db,
+    'artifacts',
+    appId,
+    'public',
+    'data',
+    'vocab_test_results'
+  );
+
+  const unsubTestResults = onSnapshot(
+    testResultsRef,
+    (snapshot) => {
+      const resultsData = [];
+
+      snapshot.forEach((resultDoc) => {
+        resultsData.push({
+          id: resultDoc.id,
+          ...resultDoc.data()
+        });
+      });
+
+      setVocabTestResults(resultsData);
+    },
+    (error) => {
+      console.error('Error fetching vocabulary test results:', error);
+    }
+  );
   const unsubSets = onSnapshot(
     setsRef,
     (snapshot) => {
       const setsData = [];
 
-      snapshot.forEach((doc) => {
+      snapshot.forEach((setDoc) => {
         setsData.push({
-          id: doc.id,
-          ...doc.data()
+          id: setDoc.id,
+          ...setDoc.data()
         });
       });
 
       setSets(setsData);
 
-      // Auto select first set if none selected
-      if (setsData.length > 0 && !selectedSetId && !sharedSetId) {
-  setSelectedSetId(setsData[0].id);
-}
+      if (
+        setsData.length > 0 &&
+        !selectedSetId &&
+        !sharedSetId
+      ) {
+        setSelectedSetId(setsData[0].id);
+      }
     },
     (error) => {
-      console.error("Error fetching sets:", error);
+      console.error('Error fetching sets:', error);
     }
   );
 
@@ -905,13 +972,17 @@ useEffect(() => {
     setResults([]);
   }
 
+  
   return () => {
     unsubSets();
+    unsubTests();
+    unsubTestResults();
 
     if (unsubResults) {
       unsubResults();
     }
   };
+
 }, [user, isTeacherLoggedIn]);
 
   // Selected Set Details
@@ -1101,11 +1172,13 @@ if (validTerms.length < 2)
   return alert("Cần ít nhất 2 từ hợp lệ!");
 
     try {
-      const setPayload = {
+    
+const setPayload = {
   title: setTitle,
   description: setDescription,
   groups: setGroups,
   terms: validTerms,
+  testEnabled: testEnabled,
   createdAt: new Date().toISOString(),
   author: 'Teacher'
 };
@@ -1141,6 +1214,7 @@ if (validTerms.length < 2)
     setSetTitle(vocabSet.title);
     setSetDescription(vocabSet.description || '');
     setSetGroups(vocabSet.groups || []);
+    setTestEnabled(vocabSet.testEnabled === true);
     setTerms(vocabSet.terms || []);
     setIsCreatingSet(true);
   };
@@ -1358,7 +1432,10 @@ if (validTerms.length < 2)
   selectedSetId={selectedSetId}
   setSelectedSetId={setSelectedSetId}
   results={results}
-
+  vocabTests={vocabTests}
+  vocabTestResults={vocabTestResults}
+  testEnabled={testEnabled}
+  setTestEnabled={setTestEnabled}
   isCreatingSet={isCreatingSet}
   setIsCreatingSet={setIsCreatingSet}
   setTitle={setTitle}
@@ -1420,6 +1497,7 @@ setRosterStages={setRosterStages}
           /* ================= STUDENT MODE ================= */
           <StudentArea
             sets={studentSets}
+            vocabTests={vocabTests}
             selectedSetId={selectedSetId}
             setSelectedSetId={setSelectedSetId}
             activeSet={activeSet}
@@ -1588,6 +1666,8 @@ function TeacherDashboard({
   selectedSetId,
   setSelectedSetId,
   results,
+  vocabTests,
+  vocabTestResults,
   isCreatingSet,
   setIsCreatingSet,
   setTitle,
@@ -1619,6 +1699,8 @@ function TeacherDashboard({
     setVocabImportError,
   copyShareLink,
   copiedLink,
+    testEnabled,
+  setTestEnabled,
 
   // Student roster
   roster,
@@ -1642,6 +1724,21 @@ setRosterStages,
   handleImportRosterStudents
 }) {
   const [showQRCode, setShowQRCode] = useState(false);
+  const [isCreatingTest, setIsCreatingTest] = useState(false);
+  const [testPanelTab, setTestPanelTab] = useState('list');
+  const [showAllTestResults, setShowAllTestResults] = useState(false);
+  const [analyticsTestFilter, setAnalyticsTestFilter] = useState('');
+  const [analyticsClassFilter, setAnalyticsClassFilter] = useState('');
+  const [analyticsFrom, setAnalyticsFrom] = useState('');
+  const [analyticsTo, setAnalyticsTo] = useState('');
+  const [testTitle, setTestTitle] = useState('');
+  const [testReminder, setTestReminder] = useState('');
+  const [testDueDate, setTestDueDate] = useState('');
+  const [testQuestions, setTestQuestions] = useState([]);
+  const [testExcelError, setTestExcelError] = useState('');
+  const [testExcelFileName, setTestExcelFileName] = useState('');
+  const [editingTestId, setEditingTestId] = useState('');
+  const [editingQuestionIndex, setEditingQuestionIndex] = useState(-1);
   const [activeTab, setActiveTab] = useState('sets');
   const [selectedGroup, setSelectedGroup] = useState('');
   const filteredSets = selectedGroup
@@ -1654,6 +1751,245 @@ const [dateTo, setDateTo] = useState('');
 const [selectedResultIds, setSelectedResultIds] = useState<string[]>([]);
   
 const selectedSet = sets.find(s => s.id === selectedSetId);
+
+const filteredAnalyticsResults = vocabTestResults.filter((r) => {
+  const resultDate = String(r.date || r.createdAt || '').slice(0, 10);
+  return (!analyticsTestFilter || (r.testId === analyticsTestFilter || r.testTitle === analyticsTestFilter))
+    && (!analyticsClassFilter || String(r.studentClass || '') === analyticsClassFilter)
+    && (!analyticsFrom || resultDate >= analyticsFrom)
+    && (!analyticsTo || resultDate <= analyticsTo);
+});
+const analyticsStudentRows = Object.values(filteredAnalyticsResults.reduce((acc, r) => {
+  const key = String(r.studentCode || r.studentName || 'unknown');
+  if (!acc[key]) acc[key] = { key, name: r.studentName || '—', code: r.studentCode || '—', studentClass: r.studentClass || 'Chưa phân lớp', attempts: 0, totalPercent: 0, latestDate: '' };
+  acc[key].attempts += 1;
+  acc[key].totalPercent += Number(r.percentage ?? (Number(r.total) ? Number(r.score || 0) / Number(r.total) * 100 : 0));
+  const d = String(r.date || r.createdAt || '').slice(0, 10);
+  if (d > acc[key].latestDate) acc[key].latestDate = d;
+  return acc;
+}, {})).map((s) => ({ ...s, average: Math.round(s.totalPercent / s.attempts) })).sort((a,b) => a.average - b.average);
+const analyticsAverage = filteredAnalyticsResults.length ? Math.round(filteredAnalyticsResults.reduce((sum, r) => sum + Number(r.percentage ?? (Number(r.total) ? Number(r.score || 0) / Number(r.total) * 100 : 0)), 0) / filteredAnalyticsResults.length) : 0;
+const analyticsPassCount = filteredAnalyticsResults.filter(r => Number(r.percentage ?? (Number(r.total) ? Number(r.score || 0) / Number(r.total) * 100 : 0)) >= 70).length;
+const analyticsClasses = [...new Set(vocabTestResults.map(r => String(r.studentClass || '').trim()).filter(Boolean))].sort();
+
+const [selectedTestSetId, setSelectedTestSetId] = useState('');
+const [testQuestionType, setTestQuestionType] = useState('mcq');
+const [testQuestionPrompt, setTestQuestionPrompt] = useState('');
+const [testQuestionOptions, setTestQuestionOptions] = useState(['', '', '', '']);
+const [testQuestionAnswer, setTestQuestionAnswer] = useState('');
+const [testSaving, setTestSaving] = useState(false);
+
+const handleTestExcelImport = async (event) => {
+  const file = event.target.files?.[0];
+  if (!file) return;
+  setTestExcelError('');
+  setTestExcelFileName('');
+  try {
+    const buffer = await file.arrayBuffer();
+    const workbook = XLSX.read(buffer, { type: 'array' });
+    const sheet = workbook.Sheets[workbook.SheetNames[0]];
+    const rows = XLSX.utils.sheet_to_json(sheet, { defval: '', raw: false });
+    if (!rows.length) {
+      setTestExcelError('File Excel chưa có dữ liệu câu hỏi.');
+      return;
+    }
+    const normalize = (value) => String(value ?? '').trim().toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[^a-z0-9]/g, '');
+    const parsed = rows.map((row, index) => {
+      const data = {};
+      Object.entries(row).forEach(([key, value]) => { data[normalize(key)] = String(value ?? '').trim(); });
+      const get = (...keys) => {
+        for (const key of keys) if (data[normalize(key)]) return data[normalize(key)];
+        return '';
+      };
+      const prompt = get('question', 'prompt', 'cau hoi', 'noi dung cau hoi', 'sentence');
+      const answer = get('answer', 'correct answer', 'dap an', 'dap an dung');
+      const rawType = normalize(get('type', 'question type', 'loai cau hoi'));
+      const type = (!rawType || ['mcq', 'multiplechoice', 'tracnghiem', 'multiple'].includes(rawType)) ? 'mcq' : (['fill', 'fillintheblank', 'blank', 'dien tu', 'dien tu vao cho trong'].includes(rawType) ? 'fill' : rawType);
+      const options = [
+        get('option1', 'option 1', 'a', 'choice a', 'lua chon 1'),
+        get('option2', 'option 2', 'b', 'choice b', 'lua chon 2'),
+        get('option3', 'option 3', 'c', 'choice c', 'lua chon 3'),
+        get('option4', 'option 4', 'd', 'choice d', 'lua chon 4')
+      ];
+      return { rowNumber: index + 2, prompt, answer, type, options };
+    });
+    const errors = [];
+    const questions = [];
+    parsed.forEach((q) => {
+      if (!q.prompt && !q.answer && q.options.every(x => !x)) return;
+      if (!q.prompt || !q.answer) { errors.push(`Dòng ${q.rowNumber}: thiếu câu hỏi hoặc đáp án.`); return; }
+      if (q.type !== 'mcq' && q.type !== 'fill') { errors.push(`Dòng ${q.rowNumber}: loại câu hỏi phải là MCQ hoặc Fill.`); return; }
+      if (q.type === 'mcq' && (q.options.some(x => !x) || !q.options.some(x => x.toLowerCase() === q.answer.toLowerCase()))) {
+        errors.push(`Dòng ${q.rowNumber}: MCQ cần đủ 4 lựa chọn và đáp án phải trùng một lựa chọn.`); return;
+      }
+      questions.push({ type: q.type, prompt: q.prompt, answer: q.answer, options: q.type === 'mcq' ? q.options : [] });
+    });
+    if (!questions.length) {
+      setTestExcelError(errors.length ? errors.join('\n') : 'Không tìm thấy câu hỏi hợp lệ. Kiểm tra tên cột trong file mẫu.');
+      return;
+    }
+    if (errors.length) {
+      setTestExcelError(`Đã nhập trước ${questions.length} câu hợp lệ. Một số dòng bị bỏ qua:\n${errors.join('\n')}`);
+    }
+    setTestQuestions(questions);
+    setEditingQuestionIndex(-1);
+    setTestExcelFileName(file.name);
+  } catch (error) {
+    console.error('Import test Excel error:', error);
+    setTestExcelError('Không đọc được file. Vui lòng dùng định dạng .xlsx, .xls hoặc .csv.');
+  } finally {
+    event.target.value = '';
+  }
+};
+
+const handleAddTestQuestion = () => {
+  const prompt = testQuestionPrompt.trim();
+  const answer = testQuestionAnswer.trim();
+
+  if (!prompt || !answer) {
+    alert('Vui lòng nhập câu hỏi và đáp án đúng.');
+    return;
+  }
+
+  if (
+    testQuestionType === 'mcq' &&
+    (
+      testQuestionOptions.some(option => !option.trim()) ||
+      !testQuestionOptions.some(option => option.trim() === answer)
+    )
+  ) {
+    alert('Vui lòng nhập đủ 4 lựa chọn và đảm bảo đáp án đúng trùng một lựa chọn.');
+    return;
+  }
+
+  const questionData = {
+    type: testQuestionType,
+    prompt,
+    options: testQuestionType === 'mcq' ? testQuestionOptions.map(option => option.trim()) : [],
+    answer
+  };
+
+  if (editingQuestionIndex >= 0) {
+    setTestQuestions(previous => previous.map((item, index) => index === editingQuestionIndex ? questionData : item));
+    setEditingQuestionIndex(-1);
+  } else {
+    setTestQuestions(previous => [...previous, questionData]);
+  }
+  setTestQuestionPrompt('');
+  setTestQuestionOptions(['', '', '', '']);
+  setTestQuestionAnswer('');
+};
+
+const handleEditTestQuestion = (index) => {
+  const question = testQuestions[index];
+  if (!question) return;
+  setTestQuestionType(question.type || 'mcq');
+  setTestQuestionPrompt(question.prompt || '');
+  setTestQuestionOptions(question.options?.length ? [...question.options] : ['', '', '', '']);
+  setTestQuestionAnswer(question.answer || '');
+  setEditingQuestionIndex(index);
+};
+
+const handleEditTest = (test) => {
+  setEditingTestId(test.id);
+  setTestTitle(test.title || '');
+  setTestReminder(test.reminder || '');
+  setTestDueDate(test.dueDate || '');
+  setSelectedTestSetId(test.setId || '');
+  setTestQuestions(Array.isArray(test.questions) ? test.questions.map(q => ({...q})) : []);
+  setTestQuestionType('mcq');
+  setTestQuestionPrompt('');
+  setTestQuestionOptions(['', '', '', '']);
+  setTestQuestionAnswer('');
+  setEditingQuestionIndex(-1);
+  setIsCreatingTest(true);
+  setTestPanelTab('form');
+};
+
+const handleSaveTest = async () => {
+  const linkedSet = sets.find(set => set.id === selectedTestSetId);
+
+  if (!testTitle.trim()) {
+    alert('Vui lòng nhập tên bài kiểm tra.');
+    return;
+  }
+
+  if (!linkedSet || linkedSet.testEnabled !== true) {
+    alert('Vui lòng chọn bộ từ vựng đã bật Test.');
+    return;
+  }
+
+  if (testQuestions.length === 0) {
+    alert('Vui lòng thêm ít nhất một câu hỏi.');
+    return;
+  }
+
+  setTestSaving(true);
+
+  try {
+    const wasEditingTest = Boolean(editingTestId);
+    const testPayload = {
+      title: testTitle.trim(),
+      reminder: testReminder.trim(),
+      dueDate: testDueDate || '',
+      setId: linkedSet.id,
+      setTitle: linkedSet.title,
+      questions: testQuestions,
+      enabled: true,
+      updatedAt: new Date().toISOString()
+    };
+    if (editingTestId) {
+      await updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'vocab_tests', editingTestId), testPayload);
+    } else {
+      await addDoc(collection(db, 'artifacts', appId, 'public', 'data', 'vocab_tests'), {
+        ...testPayload,
+        createdAt: new Date().toISOString()
+      });
+    }
+
+    setEditingTestId('');
+    setTestTitle('');
+    setTestReminder('');
+    setTestDueDate('');
+    setTestQuestions([]);
+    setSelectedTestSetId('');
+    setIsCreatingTest(false);
+    setTestPanelTab('list');
+    alert(wasEditingTest ? 'Đã cập nhật bài kiểm tra!' : 'Đã lưu bài kiểm tra!');
+  } catch (error) {
+    console.error('Error saving test:', error);
+    alert('Không lưu được bài kiểm tra. Hãy kiểm tra quyền Firestore.');
+  } finally {
+    setTestSaving(false);
+  }
+};
+
+const handleDeleteTest = async (test) => {
+  const confirmed = window.confirm(
+    `Bạn có chắc muốn xóa đề "${test.title}" không?\n\nLịch sử điểm của học sinh sẽ được giữ lại.`
+  );
+
+  if (!confirmed) return;
+
+  try {
+    await deleteDoc(
+      doc(
+        db,
+        'artifacts',
+        appId,
+        'public',
+        'data',
+        'vocab_tests',
+        test.id
+      )
+    );
+
+    alert('Đã xóa bài kiểm tra thành công!');
+  } catch (error) {
+    console.error('Error deleting test:', error);
+    alert('Không thể xóa bài kiểm tra. Hãy kiểm tra Firestore Rules.');
+  }
+};
 
 // Lọc kết quả học sinh
 const filteredResults = results.filter((r) => {
@@ -1854,6 +2190,30 @@ const handleDeleteSelectedResults = async () => {
                 />
               </div>
             </div>
+
+<div className="flex items-center justify-between gap-4 rounded-xl border border-emerald-200 bg-emerald-50 p-4">
+  <div>
+    <p className="font-semibold text-slate-800">
+      Bật bài kiểm tra (Test)
+    </p>
+    <p className="mt-1 text-sm text-slate-600">
+      Cho phép học sinh làm bài kiểm tra riêng cho bộ từ vựng này.
+    </p>
+  </div>
+
+  <label className="flex items-center gap-2 shrink-0 cursor-pointer">
+    <input
+      type="checkbox"
+      checked={testEnabled}
+      onChange={(e) => setTestEnabled(e.target.checked)}
+      className="h-5 w-5 accent-emerald-600"
+    />
+    <span className="text-sm font-medium text-slate-700">
+      Bật Test
+    </span>
+  </label>
+</div>
+
 {/* Vocabulary Groups */}
 <div className="bg-indigo-50/60 border border-indigo-100 rounded-2xl p-5">
   <div className="mb-4">
@@ -2203,6 +2563,17 @@ const handleDeleteSelectedResults = async () => {
   <Trophy className="w-4 h-4" /> Kết Quả & Bảng Xếp Hạng ({filteredResults.length})
 </button>
 
+<button
+  onClick={() => setActiveTab('tests')}
+  className={`pb-3 px-4 font-semibold text-sm border-b-2 flex items-center gap-2 transition ${
+    activeTab === 'tests'
+      ? 'border-indigo-600 text-indigo-600'
+      : 'border-transparent text-slate-500 hover:text-slate-800'
+  }`}
+>
+  <BookOpen className="w-4 h-4" /> Bài kiểm tra ({vocabTests.length})
+</button>
+
 {/* THÊM NÚT MỚI NGAY TẠI ĐÂY */}
 <button
   onClick={() => setActiveTab('roster')}
@@ -2217,7 +2588,392 @@ const handleDeleteSelectedResults = async () => {
 
 </div>
 
-          {activeTab === 'sets' ? (
+
+{activeTab === 'tests' ? (
+  <div className="space-y-5">
+    <div className="flex items-center justify-between gap-3">
+      <div>
+        <h2 className="text-xl font-bold text-slate-800">
+          Quản lý bài kiểm tra
+        </h2>
+        <p className="text-sm text-slate-500 mt-1">
+          Tạo và quản lý đề kiểm tra cho các bộ từ vựng đã bật Test.
+        </p>
+      </div>
+      <button
+        onClick={() => {
+          setEditingTestId('');
+          setEditingQuestionIndex(-1);
+          setTestTitle('');
+          setTestReminder('');
+          setTestDueDate('');
+          setTestQuestions([]);
+          setSelectedTestSetId('');
+          setIsCreatingTest(true);
+          setTestPanelTab('form');
+        }}
+        className="px-4 py-2.5 rounded-xl bg-indigo-600 text-white font-semibold text-sm"
+      >
+        + Tạo đề mới
+      </button>
+    </div>
+
+    {!isCreatingTest && (
+      <div className="flex flex-wrap gap-2 border-b border-slate-200 pb-3">
+        <button
+          type="button"
+          onClick={() => setTestPanelTab('list')}
+          className={`rounded-xl px-4 py-2 text-sm font-semibold ${testPanelTab === 'list' ? 'bg-indigo-600 text-white' : 'bg-white border border-slate-200 text-slate-600'}`}
+        >
+          Danh sách đề ({vocabTests.length})
+        </button>
+        <button
+          type="button"
+          onClick={() => setTestPanelTab('results')}
+          className={`rounded-xl px-4 py-2 text-sm font-semibold ${testPanelTab === 'results' ? 'bg-indigo-600 text-white' : 'bg-white border border-slate-200 text-slate-600'}`}
+        >
+          Kết quả ({vocabTestResults.length})
+        </button>
+      </div>
+    )}
+
+{isCreatingTest && testPanelTab === 'form' && (
+  <div className="rounded-2xl border border-indigo-200 bg-white p-5 space-y-5">
+    <h3 className="text-lg font-bold text-slate-800">
+      {editingTestId ? 'Chỉnh sửa bài kiểm tra' : 'Tạo bài kiểm tra mới'}
+    </h3>
+
+    <div>
+      <label className="block text-sm font-semibold mb-2">
+        Tên bài kiểm tra
+      </label>
+      <input
+        value={testTitle}
+        onChange={(e) => setTestTitle(e.target.value)}
+        placeholder="Ví dụ: Unit 1 Vocabulary Test"
+        className="w-full rounded-xl border border-slate-300 px-4 py-3"
+      />
+    </div>
+
+    <div>
+      <label className="block text-sm font-semibold mb-2">
+        Thông báo / lời nhắc cho học sinh
+      </label>
+      <textarea
+        value={testReminder}
+        onChange={(e) => setTestReminder(e.target.value)}
+        placeholder="Ví dụ: Các em hoàn thành bài Test Unit 2 trước thứ Sáu nhé!"
+        rows={3}
+        className="w-full rounded-xl border border-slate-300 px-4 py-3"
+      />
+      <p className="mt-1 text-xs text-slate-500">Để trống nếu không cần hiển thị thông báo.</p>
+    </div>
+
+    <div>
+      <label className="block text-sm font-semibold mb-2">
+        Hạn hoàn thành (không bắt buộc)
+      </label>
+      <input
+        type="date"
+        value={testDueDate}
+        onChange={(e) => setTestDueDate(e.target.value)}
+        className="w-full rounded-xl border border-slate-300 px-4 py-3"
+      />
+    </div>
+
+    <div>
+      <label className="block text-sm font-semibold mb-2">
+        Bộ từ vựng
+      </label>
+      <select
+        value={selectedTestSetId}
+        onChange={(e) => setSelectedTestSetId(e.target.value)}
+        className="w-full rounded-xl border border-slate-300 px-4 py-3"
+      >
+        <option value="">-- Chọn bộ từ vựng đã bật Test --</option>
+        {sets
+          .filter((set) => set.testEnabled === true)
+          .map((set) => (
+            <option key={set.id} value={set.id}>
+              {set.title}
+            </option>
+          ))}
+      </select>
+    </div>
+
+    <div className="rounded-xl border border-dashed border-emerald-300 bg-emerald-50/60 p-4 space-y-3">
+      <div>
+        <p className="font-semibold text-emerald-900">Nhập câu hỏi từ Excel</p>
+        <p className="mt-1 text-xs text-slate-600">Sheet đầu tiên cần có các cột: Question, Type, Option1, Option2, Option3, Option4, Answer. Type dùng MCQ hoặc Fill. Câu hỏi trong file sẽ thay thế danh sách câu hỏi hiện tại trong biểu mẫu.</p>
+      </div>
+      <div className="flex flex-wrap items-center gap-3">
+        <label className="inline-flex cursor-pointer items-center rounded-lg bg-emerald-700 px-4 py-2.5 text-sm font-semibold text-white hover:bg-emerald-800">
+          Chọn file Excel
+          <input type="file" accept=".xlsx,.xls,.csv" onChange={handleTestExcelImport} className="hidden" />
+        </label>
+        {testExcelFileName && <span className="text-sm text-emerald-800">Đã đọc: {testExcelFileName}</span>}
+      </div>
+      {testExcelError && <pre className="whitespace-pre-wrap rounded-lg bg-amber-50 p-3 text-xs text-amber-800">{testExcelError}</pre>}
+      <button type="button" onClick={() => {
+        const sample = [
+          ['Question', 'Type', 'Option1', 'Option2', 'Option3', 'Option4', 'Answer'],
+          ['What is the opposite of hot?', 'MCQ', 'cold', 'warm', 'big', 'fast', 'cold'],
+          ['She is ___ a book.', 'Fill', '', '', '', '', 'reading']
+        ];
+        const ws = XLSX.utils.aoa_to_sheet(sample);
+        const wb = XLSX.utils.book_new();
+        XLSX.utils.book_append_sheet(wb, ws, 'Test Questions');
+        XLSX.writeFile(wb, 'VocabMaster_Test_Template.xlsx');
+      }} className="text-sm font-semibold text-emerald-800 underline">Tải file Excel mẫu</button>
+    </div>
+
+    <div>
+      <label className="block text-sm font-semibold mb-2">
+        Loại câu hỏi
+      </label>
+      <select
+        value={testQuestionType}
+        onChange={(e) => {
+          setTestQuestionType(e.target.value);
+          setTestQuestionAnswer('');
+        }}
+        className="w-full rounded-xl border border-slate-300 px-4 py-3"
+      >
+        <option value="mcq">Trắc nghiệm (MCQ)</option>
+        <option value="fill">Điền từ</option>
+      </select>
+    </div>
+
+    <div>
+      <label className="block text-sm font-semibold mb-2">
+        Nội dung câu hỏi
+      </label>
+      <textarea
+        value={testQuestionPrompt}
+        onChange={(e) => setTestQuestionPrompt(e.target.value)}
+        placeholder="Nhập câu hỏi..."
+        className="w-full rounded-xl border border-slate-300 px-4 py-3"
+        rows={3}
+      />
+    </div>
+
+    {testQuestionType === 'mcq' && (
+      <div className="space-y-3">
+        <p className="text-sm font-semibold">Bốn lựa chọn</p>
+        {testQuestionOptions.map((option, index) => (
+          <input
+            key={index}
+            value={option}
+            onChange={(e) =>
+              setTestQuestionOptions((previous) =>
+                previous.map((item, i) =>
+                  i === index ? e.target.value : item
+                )
+              )
+            }
+            placeholder={`Lựa chọn ${index + 1}`}
+            className="w-full rounded-xl border border-slate-300 px-4 py-3"
+          />
+        ))}
+      </div>
+    )}
+
+    <div>
+      <label className="block text-sm font-semibold mb-2">
+        Đáp án đúng
+      </label>
+      <input
+        value={testQuestionAnswer}
+        onChange={(e) => setTestQuestionAnswer(e.target.value)}
+        placeholder={
+          testQuestionType === 'mcq'
+            ? 'Nhập chính xác một lựa chọn ở trên'
+            : 'Nhập từ hoặc đáp án đúng'
+        }
+        className="w-full rounded-xl border border-slate-300 px-4 py-3"
+      />
+    </div>
+
+    <button
+      type="button"
+      onClick={handleAddTestQuestion}
+      className="rounded-xl bg-emerald-600 px-4 py-3 font-semibold text-white"
+    >
+      {editingQuestionIndex >= 0 ? 'Cập nhật câu hỏi' : '+ Thêm câu hỏi'}
+    </button>
+
+    <div className="rounded-xl bg-slate-50 p-4">
+      <p className="font-semibold text-slate-700">
+        Danh sách câu hỏi ({testQuestions.length})
+      </p>
+
+      {testQuestions.length === 0 ? (
+        <p className="mt-2 text-sm text-slate-500">
+          Chưa có câu hỏi nào.
+        </p>
+      ) : (
+        <ol className="mt-3 list-decimal pl-5 space-y-2">
+          {testQuestions.map((question, index) => (
+            <li key={index} className="text-sm text-slate-700">
+              <span>{question.prompt}</span> <span className="text-slate-500">(Đáp án: {question.answer})</span>
+              <button type="button" onClick={() => handleEditTestQuestion(index)} className="ml-3 text-indigo-600 font-semibold">Sửa</button>
+              <button type="button" onClick={() => setTestQuestions(previous => previous.filter((_, i) => i !== index))} className="ml-3 text-red-600 font-semibold">Xóa</button>
+            </li>
+          ))}
+        </ol>
+      )}
+    </div>
+
+    <div className="flex flex-wrap gap-3">
+      <button
+        type="button"
+        onClick={handleSaveTest}
+        disabled={testSaving}
+        className="rounded-xl bg-indigo-600 px-5 py-3 font-semibold text-white disabled:opacity-50"
+      >
+        {testSaving ? 'Đang lưu...' : 'Lưu bài kiểm tra'}
+      </button>
+
+      <button
+        type="button"
+        onClick={() => setIsCreatingTest(false)}
+        className="rounded-xl border border-slate-300 px-5 py-3 font-semibold text-slate-700"
+      >
+        Hủy
+      </button>
+    </div>
+  </div>
+)}
+
+{!isCreatingTest && testPanelTab === 'list' && (vocabTests.length === 0 ? (
+  <div className="rounded-2xl border border-dashed border-slate-300 p-8 text-center">
+    <p className="font-semibold text-slate-700">
+      Chưa có bài kiểm tra nào
+    </p>
+    <p className="text-sm text-slate-500 mt-2">
+      Nhấn “Tạo đề mới” để bắt đầu.
+    </p>
+  </div>
+) : (
+  <div className="grid gap-4">
+    {vocabTests.map((test) => (
+      <div
+        key={test.id}
+        className="rounded-xl border border-slate-200 bg-white p-4"
+      >
+        <h3 className="font-bold text-slate-800">
+          {test.title || 'Bài kiểm tra chưa có tên'}
+        </h3>
+        <p className="text-sm text-slate-500 mt-1">
+          {test.questions?.length || 0} câu hỏi
+        </p>
+
+<div className="mt-3 flex flex-wrap gap-2">
+  <button
+    type="button"
+    onClick={() => handleEditTest(test)}
+    className="rounded-lg bg-indigo-50 px-3 py-2 text-sm font-semibold text-indigo-700 hover:bg-indigo-100"
+  >
+    Sửa đề &amp; đáp án
+  </button>
+
+  <button
+    type="button"
+    onClick={() => handleDeleteTest(test)}
+    className="rounded-lg bg-red-50 px-3 py-2 text-sm font-semibold text-red-600 hover:bg-red-100"
+  >
+    Xóa bài kiểm tra
+  </button>
+</div>
+      </div>
+    ))}
+  </div>
+))}
+
+{/* KẾT QUẢ BÀI KIỂM TRA */}
+{!isCreatingTest && testPanelTab === 'results' && (
+<div className="space-y-5">
+  <section className="rounded-2xl border border-slate-200 bg-white p-4 space-y-4">
+    <div><h3 className="font-bold text-slate-800">Phân tích kết quả học tập</h3><p className="mt-1 text-sm text-slate-500">Lọc theo bài kiểm tra, lớp và khoảng thời gian. Mức đạt mặc định: từ 70%.</p></div>
+    <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4">
+      <select value={analyticsTestFilter} onChange={e => setAnalyticsTestFilter(e.target.value)} className="rounded-xl border border-slate-300 px-3 py-2 text-sm"><option value="">Tất cả bài kiểm tra</option>{vocabTests.map(t => <option key={t.id} value={t.id}>{t.title || t.testTitle || 'Bài kiểm tra'}</option>)}</select>
+      <select value={analyticsClassFilter} onChange={e => setAnalyticsClassFilter(e.target.value)} className="rounded-xl border border-slate-300 px-3 py-2 text-sm"><option value="">Tất cả lớp</option>{analyticsClasses.map(c => <option key={c} value={c}>{c}</option>)}</select>
+      <label className="text-xs text-slate-500">Từ ngày<input type="date" value={analyticsFrom} onChange={e => setAnalyticsFrom(e.target.value)} className="mt-1 block w-full rounded-xl border border-slate-300 px-3 py-2 text-sm text-slate-700" /></label>
+      <label className="text-xs text-slate-500">Đến ngày<input type="date" value={analyticsTo} onChange={e => setAnalyticsTo(e.target.value)} className="mt-1 block w-full rounded-xl border border-slate-300 px-3 py-2 text-sm text-slate-700" /></label>
+    </div>
+    <button type="button" onClick={() => { setAnalyticsTestFilter(''); setAnalyticsClassFilter(''); setAnalyticsFrom(''); setAnalyticsTo(''); }} className="text-sm font-semibold text-indigo-600">Xóa bộ lọc</button>
+    <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
+      <div className="rounded-xl bg-indigo-50 p-4"><p className="text-xs text-indigo-700">Lượt làm bài</p><p className="mt-1 text-2xl font-bold text-indigo-900">{filteredAnalyticsResults.length}</p></div>
+      <div className="rounded-xl bg-sky-50 p-4"><p className="text-xs text-sky-700">Điểm trung bình</p><p className="mt-1 text-2xl font-bold text-sky-900">{analyticsAverage}%</p></div>
+      <div className="rounded-xl bg-emerald-50 p-4"><p className="text-xs text-emerald-700">Tỷ lệ đạt (≥70%)</p><p className="mt-1 text-2xl font-bold text-emerald-900">{filteredAnalyticsResults.length ? Math.round(analyticsPassCount / filteredAnalyticsResults.length * 100) : 0}%</p></div>
+      <div className="rounded-xl bg-amber-50 p-4"><p className="text-xs text-amber-700">Cần hỗ trợ</p><p className="mt-1 text-2xl font-bold text-amber-900">{analyticsStudentRows.filter(s => s.average < 70).length} HS</p></div>
+    </div>
+    <div><h4 className="mb-2 font-bold text-slate-800">Tổng hợp theo học sinh</h4>
+      {analyticsStudentRows.length ? <div className="overflow-x-auto"><table className="w-full text-left text-sm"><thead className="bg-slate-50 text-slate-500"><tr><th className="p-3">Học sinh</th><th className="p-3">Mã HS</th><th className="p-3">Lớp</th><th className="p-3">Lượt làm</th><th className="p-3">Điểm TB</th><th className="p-3">Đánh giá</th></tr></thead><tbody className="divide-y">{analyticsStudentRows.map(s => <tr key={s.key}><td className="p-3 font-medium">{s.name}</td><td className="p-3">{s.code}</td><td className="p-3">{s.studentClass}</td><td className="p-3">{s.attempts}</td><td className="p-3 font-bold">{s.average}%</td><td className="p-3"><span className={`rounded-full px-2 py-1 text-xs font-semibold ${s.average >= 70 ? 'bg-emerald-50 text-emerald-700' : 'bg-amber-50 text-amber-700'}`}>{s.average >= 70 ? 'Đạt' : 'Cần hỗ trợ'}</span></td></tr>)}</tbody></table></div> : <p className="py-4 text-sm text-slate-500">Chưa có dữ liệu phù hợp với bộ lọc.</p>}
+    </div>
+  </section>
+  <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white">
+  <div className="border-b border-slate-200 bg-slate-50 p-4">
+    <h3 className="font-bold text-slate-800">Kết quả bài kiểm tra</h3>
+    <p className="mt-1 text-sm text-slate-500">
+      {vocabTestResults.length} lượt làm bài đã được ghi nhận
+    </p>
+  </div>
+  {vocabTestResults.length === 0 ? (
+    <p className="p-6 text-center text-sm text-slate-500">
+      Chưa có học sinh nào nộp bài kiểm tra.
+    </p>
+  ) : (
+    <div className="overflow-x-auto">
+      <table className="w-full text-left text-sm">
+        <thead className="bg-white text-slate-500">
+          <tr>
+            <th className="whitespace-nowrap px-4 py-3 font-semibold">Học sinh</th>
+            <th className="whitespace-nowrap px-4 py-3 font-semibold">Mã HS</th>
+            <th className="whitespace-nowrap px-4 py-3 font-semibold">Lớp</th>
+            <th className="whitespace-nowrap px-4 py-3 font-semibold">Bài kiểm tra</th>
+            <th className="whitespace-nowrap px-4 py-3 font-semibold">Điểm</th>
+            <th className="whitespace-nowrap px-4 py-3 font-semibold">Tỉ lệ đúng</th>
+            <th className="whitespace-nowrap px-4 py-3 font-semibold">Ngày làm</th>
+          </tr>
+        </thead>
+        <tbody className="divide-y divide-slate-100">
+          {[...vocabTestResults]
+            .sort((a, b) => String(b.createdAt || b.date || '').localeCompare(String(a.createdAt || a.date || '')))
+            .slice(0, showAllTestResults ? undefined : 5)
+            .map((result, index) => (
+              <tr key={result.id || `${result.studentCode || 'student'}-${result.testId || 'test'}-${index}`} className="hover:bg-slate-50">
+                <td className="whitespace-nowrap px-4 py-3 font-medium text-slate-800">{result.studentName || '—'}</td>
+                <td className="whitespace-nowrap px-4 py-3 text-slate-600">{result.studentCode || '—'}</td>
+                <td className="whitespace-nowrap px-4 py-3 text-slate-600">{result.studentClass || '—'}</td>
+                <td className="min-w-40 px-4 py-3 text-slate-700">{result.testTitle || '—'}</td>
+                <td className="whitespace-nowrap px-4 py-3 font-semibold text-slate-800">{result.score ?? 0}/{result.total ?? 0}</td>
+                <td className="whitespace-nowrap px-4 py-3">
+                  <span className="rounded-full bg-indigo-50 px-2.5 py-1 font-semibold text-indigo-700">{result.percentage ?? 0}%</span>
+                </td>
+                <td className="whitespace-nowrap px-4 py-3 text-slate-600">{result.date || (result.createdAt ? String(result.createdAt).slice(0, 10) : '—')}</td>
+              </tr>
+            ))}
+        </tbody>
+      </table>
+    </div>
+  )}
+  {vocabTestResults.length > 5 && (
+    <div className="border-t border-slate-200 p-3 text-center">
+      <button
+        type="button"
+        onClick={() => setShowAllTestResults(previous => !previous)}
+        className="rounded-lg px-4 py-2 text-sm font-semibold text-indigo-600 hover:bg-indigo-50"
+      >
+        {showAllTestResults ? 'Thu gọn kết quả' : `Xem thêm ${vocabTestResults.length - 5} lượt`}
+      </button>
+    </div>
+  )}
+</div>
+</div>
+)}
+</div>
+) : activeTab === 'sets' ? (
 
   /* TAB 1: SETS LIST */
 
@@ -2990,6 +3746,7 @@ const handleDeleteSelectedResults = async () => {
 
 function StudentArea({
   sets,
+  vocabTests,
   selectedSetId,
   setSelectedSetId,
   activeSet,
@@ -3006,6 +3763,68 @@ function StudentArea({
   latestScoreData
 }) {
   const [showStudentProgress, setShowStudentProgress] = useState(false);
+  const [selectedTestId, setSelectedTestId] = useState('');
+  
+const [testAnswers, setTestAnswers] = useState({});
+const [testSubmitted, setTestSubmitted] = useState(false);
+const [testScoreData, setTestScoreData] = useState(null);
+
+const selectedTest = vocabTests.find(
+  (test) => test.id === selectedTestId
+);
+
+const handleSubmitAssignedTest = async () => {
+  if (!selectedTest || !activeSet || !isStudentVerified) {
+    alert('Vui lòng xác nhận mã học sinh và chọn bài kiểm tra.');
+    return;
+  }
+
+  const questions = selectedTest.questions || [];
+  if (questions.length === 0) {
+    alert('Bài kiểm tra chưa có câu hỏi.');
+    return;
+  }
+
+  const answerDetails = questions.map((question, index) => {
+    const studentAnswer = String(testAnswers[index] || '').trim();
+    const correctAnswer = String(question.answer || '').trim();
+    const isCorrect = studentAnswer.toLowerCase() === correctAnswer.toLowerCase();
+    return { questionPrompt: question.prompt || '', studentAnswer, correctAnswer, isCorrect };
+  });
+  const correctCount = answerDetails.filter(item => item.isCorrect).length;
+
+  const scoreData = {
+    answerDetails,
+    score: correctCount,
+    total: questions.length,
+    percentage: Math.round((correctCount / questions.length) * 100),
+    testId: selectedTest.id,
+    testTitle: selectedTest.title
+  };
+
+  setTestScoreData(scoreData);
+  setTestSubmitted(true);
+
+  try {
+    const resultRef = collection(
+      db, 'artifacts', appId, 'public', 'data', 'vocab_test_results'
+    );
+
+    await addDoc(resultRef, {
+      ...scoreData,
+      studentCode: studentCode.trim(),
+      studentName: studentName.trim(),
+      studentClass: studentClass || '',
+      setId: activeSet.id,
+      setTitle: activeSet.title,
+      date: new Date().toISOString().slice(0, 10),
+      createdAt: new Date().toISOString()
+    });
+  } catch (error) {
+    console.error('Error saving test result:', error);
+    alert('Đã chấm điểm nhưng không lưu được kết quả. Hãy kiểm tra quyền Firestore.');
+  }
+};
 
   const isSharedLink = new URLSearchParams(window.location.search).has('set');  
   if (sets.length === 0 && isStudentVerified) {
@@ -3022,6 +3841,40 @@ function StudentArea({
     <div className="space-y-6">
        {activeStudyMode === 'menu' ? (
   <>
+    {/* TEST REMINDERS */}
+    {isStudentVerified && vocabTests.filter((test) =>
+      test.reminder?.trim() &&
+      test.enabled !== false &&
+      sets.some((set) => set.id === test.setId && set.testEnabled === true) 
+    ).length > 0 && (
+      <section className="rounded-2xl border border-amber-200 bg-amber-50 p-5 shadow-sm">
+        <div className="mb-3 flex items-center gap-3">
+          <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-amber-100 text-2xl">📢</div>
+          <div>
+            <h3 className="font-extrabold text-amber-900">Thông báo & nhắc nhở</h3>
+            <p className="text-xs text-amber-800">Thông tin từ giáo viên dành cho các bài kiểm tra của em</p>
+          </div>
+        </div>
+        <div className="space-y-3">
+          {vocabTests.filter((test) =>
+            test.reminder?.trim() &&
+            test.enabled !== false &&
+            sets.some((set) => set.id === test.setId && set.testEnabled === true)
+          ).map((test) => (
+            <div key={test.id} className="rounded-xl border border-amber-100 bg-white p-4">
+              <p className="font-bold text-slate-800">{test.title}</p>
+              <p className="mt-1 whitespace-pre-wrap text-sm leading-relaxed text-slate-700">{test.reminder}</p>
+              {test.dueDate && (
+                <p className="mt-2 inline-flex rounded-full bg-rose-50 px-3 py-1 text-xs font-bold text-rose-700">
+                  Hạn hoàn thành: {new Date(`${test.dueDate}T00:00:00`).toLocaleDateString('vi-VN')}
+                </p>
+              )}
+            </div>
+          ))}
+        </div>
+      </section>
+    )}
+
     {/* STUDENT HOME — PROFILE & SET SELECTOR */}
     <div className="relative overflow-hidden rounded-[2rem] border border-violet-100 bg-white shadow-lg shadow-violet-100/50">
   {/* Welcome banner */}
@@ -3322,6 +4175,65 @@ function StudentArea({
     </span>
   </div>
 
+{/* Vocabulary tests */}
+{activeSet.testEnabled === true && (
+  <div className="rounded-2xl border border-indigo-200 bg-indigo-50/70 p-5">
+    <div className="flex items-start gap-3">
+      <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-indigo-100 text-2xl">
+        📝
+      </div>
+      <div className="min-w-0 flex-1">
+        <h3 className="font-extrabold text-slate-800">
+          Bài kiểm tra
+        </h3>
+        <p className="mt-1 text-sm text-slate-600">
+          Chọn đề kiểm tra cho bộ từ vựng này.
+        </p>
+      </div>
+    </div>
+
+    {vocabTests.filter(
+      (test) => test.setId === activeSet.id && test.enabled !== false
+    ).length === 0 ? (
+      <p className="mt-4 rounded-xl bg-white p-3 text-sm text-slate-500">
+        Giáo viên chưa tạo đề kiểm tra cho bộ từ vựng này.
+      </p>
+    ) : (
+      <div className="mt-4 space-y-3">
+        {vocabTests
+          .filter(
+            (test) => test.setId === activeSet.id && test.enabled !== false
+          )
+          .map((test) => (
+            <div
+              key={test.id}
+              className="flex flex-wrap items-center justify-between gap-3 rounded-xl bg-white p-4"
+            >
+              <div>
+                <p className="font-bold text-slate-800">{test.title}</p>
+                <p className="mt-1 text-xs text-slate-500">
+                  {test.questions?.length || 0} câu hỏi
+                </p>
+              </div>
+
+              <button
+                type="button"
+                disabled={!isStudentVerified}
+                onClick={() => {
+                  setSelectedTestId(test.id);
+                  setActiveStudyMode('assigned-test');
+                }}
+                className="rounded-xl bg-indigo-600 px-4 py-2 font-semibold text-white disabled:cursor-not-allowed disabled:opacity-50"
+              >
+                Làm bài
+              </button>
+            </div>
+          ))}
+      </div>
+    )}
+  </div>
+)}
+
   {/* Learning mode cards */}
   <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
 
@@ -3421,7 +4333,134 @@ function StudentArea({
         <MatchingMode activeSet={activeSet} onFinish={handleSaveScore} onBack={() => setActiveStudyMode('menu')} />
       ) : activeStudyMode === 'spelling' ? (
         <SpellingMode activeSet={activeSet} onFinish={handleSaveScore} onBack={() => setActiveStudyMode('menu')} />
-      ) : activeStudyMode === 'completed' && latestScoreData ? (
+      ) : activeStudyMode === 'assigned-test' ? (
+  <div className="space-y-6">
+    {selectedTest ? (
+      <>
+        <div className="overflow-hidden rounded-3xl border border-violet-100 bg-white shadow-sm">
+          <div className="flex flex-col gap-4 bg-gradient-to-r from-violet-50 via-white to-sky-50 p-5 sm:flex-row sm:items-center sm:justify-between sm:p-6">
+            <div className="flex items-start gap-3">
+              <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-violet-100 text-xl">📝</div>
+              <div>
+                <h2 className="text-xl font-extrabold tracking-tight text-slate-800">{selectedTest.title}</h2>
+                <p className="mt-1 text-sm text-slate-500">Làm bài thật tốt nhé! ✨</p>
+              </div>
+            </div>
+            <button
+              onClick={() => {
+                setActiveStudyMode('menu');
+                setSelectedTestId('');
+                setTestAnswers({});
+                setTestSubmitted(false);
+                setTestScoreData(null);
+              }}
+              className="self-start rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-semibold text-slate-700 shadow-sm transition hover:border-violet-200 hover:bg-violet-50 sm:self-auto"
+            >
+              ← Quay lại
+            </button>
+          </div>
+          <div className="flex flex-wrap items-center gap-2 border-t border-violet-100 px-5 py-3 sm:px-6">
+            <span className="rounded-full bg-violet-100 px-3 py-1 text-xs font-bold text-violet-700">📚 {selectedTest.questions?.length || 0} câu hỏi</span>
+            <span className="text-xs text-slate-500">Chọn một đáp án phù hợp nhất cho mỗi câu.</span>
+          </div>
+        </div>
+
+        {selectedTest.questions?.map((question, index) => (
+          <div
+            key={index}
+            className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm transition hover:border-violet-200 hover:shadow-md sm:p-6"
+          >
+            <div className="mb-4 flex items-start gap-3">
+              <span className="flex h-8 min-w-8 shrink-0 items-center justify-center rounded-xl bg-violet-100 px-2 text-sm font-extrabold text-violet-700">{index + 1}</span>
+              <p className="pt-1 text-base font-bold leading-relaxed text-slate-800 sm:text-lg">
+                {question.prompt}
+              </p>
+            </div>
+
+            {question.type === 'mcq' ? (
+              <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4">
+                {question.options?.map((option, optionIndex) => {
+                  const isSelected = testAnswers[index] === option;
+                  const optionLetters = ['A', 'B', 'C', 'D'];
+                  return (
+                    <label
+                      key={optionIndex}
+                      className={`flex min-h-[58px] cursor-pointer items-center gap-3 rounded-xl border p-3 transition-all ${testSubmitted ? 'cursor-default' : 'hover:-translate-y-0.5 hover:shadow-sm'} ${isSelected ? 'border-violet-400 bg-violet-50 ring-2 ring-violet-100' : 'border-slate-200 bg-slate-50/70 hover:border-violet-200 hover:bg-violet-50/50'} ${testSubmitted && isSelected ? 'border-violet-300 bg-violet-50' : ''}`}
+                    >
+                      <input
+                        type="radio"
+                        name={`test-question-${index}`}
+                        value={option}
+                        checked={isSelected}
+                        disabled={testSubmitted}
+                        onChange={() =>
+                          setTestAnswers(previous => ({
+                            ...previous,
+                            [index]: option
+                          }))
+                        }
+                        className="h-4 w-4 shrink-0 accent-violet-600"
+                      />
+                      <span className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-lg text-xs font-extrabold ${isSelected ? 'bg-violet-600 text-white' : 'bg-white text-slate-500 shadow-sm'}`}>{optionLetters[optionIndex] || optionIndex + 1}</span>
+                      <span className="text-sm font-medium leading-snug text-slate-700">{option}</span>
+                    </label>
+                  );
+                })}
+              </div>
+            ) : (
+              <input
+                type="text"
+                value={testAnswers[index] || ''}
+                disabled={testSubmitted}
+                onChange={event =>
+                  setTestAnswers(previous => ({
+                    ...previous,
+                    [index]: event.target.value
+                  }))
+                }
+                placeholder="Nhập câu trả lời của em..."
+                className="w-full rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 outline-none transition placeholder:text-slate-400 focus:border-violet-400 focus:bg-white focus:ring-4 focus:ring-violet-100 disabled:cursor-not-allowed disabled:opacity-70"
+              />
+            )}
+            {testSubmitted && (() => {
+              const studentAnswer = String(testAnswers[index] || '').trim();
+              const correctAnswer = String(question.answer || '').trim();
+              const isCorrect = studentAnswer.toLowerCase() === correctAnswer.toLowerCase();
+              return (
+                <div className={`rounded-lg p-3 text-sm ${isCorrect ? 'bg-emerald-50 text-emerald-800' : 'bg-rose-50 text-rose-800'}`}>
+                  <p className="font-semibold">{isCorrect ? '✓ Chính xác' : '✗ Chưa đúng'}</p>
+                  <p>Câu trả lời của bạn: {studentAnswer || '(Chưa trả lời)'}</p>
+                  {!isCorrect && <p>Đáp án đúng: {correctAnswer}</p>}
+                </div>
+              );
+            })()}
+          </div>
+        ))}
+
+        {!testSubmitted ? (
+          <button
+            onClick={handleSubmitAssignedTest}
+            className="w-full rounded-xl bg-blue-600 px-4 py-3 font-bold text-white"
+          >
+            Nộp bài và xem điểm
+          </button>
+        ) : (
+          <div className="rounded-xl border p-4 text-center">
+            <h3 className="text-lg font-bold">Kết quả bài kiểm tra</h3>
+            <p>
+              Điểm: {testScoreData?.score}/{testScoreData?.total}
+            </p>
+            <p>
+              Tỉ lệ đúng: {testScoreData?.percentage}%
+            </p>
+          </div>
+        )}
+      </>
+    ) : (
+      <p>Không tìm thấy bài kiểm tra.</p>
+    )}
+  </div>
+    ) : activeStudyMode === 'completed' && latestScoreData ? (
   
   <CompletionScreen
     scoreData={latestScoreData}
@@ -3435,6 +4474,8 @@ function StudentArea({
 
 function StudentProgress({ studentCode, db, appId, onBack }) {
   const [records, setRecords] = useState([]);
+  const [testRecords, setTestRecords] = useState([]);
+  const [showAllTestHistory, setShowAllTestHistory] = useState(false);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
 
@@ -3465,7 +4506,23 @@ function StudentProgress({ studentCode, db, appId, onBack }) {
           where('studentCode', '==', studentCode.trim())
         );
 
-        const snapshot = await getDocs(q);
+        const testResultsRef = collection(
+          db,
+          'artifacts',
+          appId,
+          'public',
+          'data',
+          'vocab_test_results'
+        );
+        const testQuery = query(
+          testResultsRef,
+          where('studentCode', '==', studentCode.trim())
+        );
+
+        const [snapshot, testSnapshot] = await Promise.all([
+          getDocs(q),
+          getDocs(testQuery)
+        ]);
 
         if (!cancelled) {
           setRecords(
@@ -3473,6 +4530,16 @@ function StudentProgress({ studentCode, db, appId, onBack }) {
               id: item.id,
               ...item.data(),
             }))
+          );
+          setTestRecords(
+            testSnapshot.docs.map((item) => ({
+              id: item.id,
+              ...item.data(),
+            })).sort((a, b) =>
+              String(b.createdAt || b.date || '').localeCompare(
+                String(a.createdAt || a.date || '')
+              )
+            )
           );
         }
       } catch (err) {
@@ -3593,6 +4660,49 @@ const dailyChartData = Object.values(
           ← Quay lại
         </button>
       </div>
+
+      {!loading && !error && (
+        <section className="rounded-2xl border border-violet-100 bg-white p-5 shadow-sm">
+          <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
+            <div>
+              <h3 className="text-lg font-bold text-slate-800">Lịch sử bài kiểm tra</h3>
+              <p className="mt-1 text-sm text-slate-500">
+                {testRecords.length} lượt làm bài
+              </p>
+            </div>
+          </div>
+          {testRecords.length === 0 ? (
+            <p className="rounded-xl bg-slate-50 p-4 text-sm text-slate-500">
+              Bạn chưa có lịch sử bài kiểm tra.
+            </p>
+          ) : (
+            <div className="space-y-3">
+              {(showAllTestHistory ? testRecords : testRecords.slice(0, 3)).map((item) => (
+                <div key={item.id} className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-slate-200 p-4">
+                  <div>
+                    <p className="font-semibold text-slate-800">{item.testTitle || 'Bài kiểm tra'}</p>
+                    <p className="mt-1 text-sm text-slate-500">
+                      {item.setTitle || 'Bộ từ vựng'} · {item.date || String(item.createdAt || '').slice(0, 10) || '—'}
+                    </p>
+                  </div>
+                  <p className="whitespace-nowrap font-bold text-indigo-600">
+                    {item.score ?? 0}/{item.total ?? 0} · {item.percentage ?? 0}%
+                  </p>
+                </div>
+              ))}
+              {testRecords.length > 3 && (
+                <button
+                  type="button"
+                  onClick={() => setShowAllTestHistory((previous) => !previous)}
+                  className="w-full rounded-xl bg-violet-50 px-4 py-3 text-sm font-semibold text-violet-700 hover:bg-violet-100"
+                >
+                  {showAllTestHistory ? 'Thu gọn lịch sử' : `Xem tất cả (${testRecords.length})`}
+                </button>
+              )}
+            </div>
+          )}
+        </section>
+      )}
 
       {loading ? (
         <div className="rounded-2xl bg-white p-8 text-center text-slate-500 shadow">
