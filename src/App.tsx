@@ -33,6 +33,8 @@ import {
   Upload,
 } from 'lucide-react';
 import { QRCodeSVG } from 'qrcode.react';
+import TreasureHunt from './TreasureHunt';
+import WordCafe from './WordCafe';
 import { initializeApp } from 'firebase/app';
 import { 
   getAuth,
@@ -4171,7 +4173,7 @@ const handleSubmitAssignedTest = async () => {
     </div>
 
     <span className="rounded-full bg-violet-100 px-3 py-1.5 text-xs font-bold text-violet-700">
-      4 cách học thú vị
+      5 cách học thú vị
     </span>
   </div>
 
@@ -4297,6 +4299,34 @@ const handleSubmitAssignedTest = async () => {
       }}
     />
 
+<StudyCard
+      title="Treasure Hunt — Săn Kho Báu"
+      desc="Khám phá đảo bí ẩn, trả lời câu hỏi từ vựng và thu thập kho báu."
+      icon={<span className="text-3xl">🗺️</span>}
+      color="border-amber-200 bg-gradient-to-br from-amber-50 via-white to-violet-50 hover:border-amber-400"
+      onClick={() => {
+        if (!isStudentVerified) {
+          alert('Vui lòng nhập và xác nhận mã học sinh trước.');
+          return;
+        }
+        setActiveStudyMode('treasure-hunt');
+      }}
+    />
+
+<StudyCard
+      title="Word Café — Quán cà phê từ vựng"
+      desc="Nhận order, luyện từ vựng và phục vụ những vị khách đáng yêu."
+      icon={<span className="text-3xl">☕</span>}
+      color="border-pink-200 bg-gradient-to-br from-pink-50 via-white to-violet-50 hover:border-pink-400"
+      onClick={() => {
+        if (!isStudentVerified) {
+          alert('Vui lòng nhập và xác nhận mã học sinh trước.');
+          return;
+        }
+        setActiveStudyMode('word-cafe');
+      }}
+    />
+
   </div>
 
   {/* Student progress entry */}
@@ -4333,6 +4363,18 @@ const handleSubmitAssignedTest = async () => {
         <MatchingMode activeSet={activeSet} onFinish={handleSaveScore} onBack={() => setActiveStudyMode('menu')} />
       ) : activeStudyMode === 'spelling' ? (
         <SpellingMode activeSet={activeSet} onFinish={handleSaveScore} onBack={() => setActiveStudyMode('menu')} />
+      ) : activeStudyMode === 'treasure-hunt' ? (
+        <TreasureHunt
+          activeSet={activeSet}
+          onBack={() => setActiveStudyMode('menu')}
+          onFinish={handleSaveScore}
+        />
+      ) : activeStudyMode === 'word-cafe' ? (
+        <WordCafe
+          activeSet={activeSet}
+          onBack={() => setActiveStudyMode('menu')}
+          onFinish={handleSaveScore}
+        />
       ) : activeStudyMode === 'assigned-test' ? (
   <div className="space-y-6">
     {selectedTest ? (
