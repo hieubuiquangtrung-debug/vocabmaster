@@ -1544,6 +1544,7 @@ setRosterStages={setRosterStages}
             db={db}
             appId={appId}
             studentStages={studentStages}
+            groupOptions={groupOptions}
             sets={studentSets}
             vocabTests={vocabTests}
             selectedSetId={selectedSetId}
@@ -3843,6 +3844,7 @@ function StudentArea({
   db,
   appId,
   studentStages = [],
+  groupOptions = [],
   sets,
   vocabTests,
   selectedSetId,
