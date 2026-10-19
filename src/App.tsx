@@ -35,6 +35,7 @@ import {
 import { QRCodeSVG } from 'qrcode.react';
 import TreasureHunt from './TreasureHunt';
 import WordCafe from './WordCafe';
+import GrammarPractice from './GrammarPractice';
 import { initializeApp } from 'firebase/app';
 import { 
   getAuth,
@@ -486,7 +487,15 @@ useEffect(() => {
           normalizedRow['lop'] ||
           normalizedRow['class'] ||
           normalizedRow['classname'] ||
-          ''
+          '',
+        stages: String(
+          normalizedRow['stage'] || normalizedRow['stages'] ||
+          normalizedRow['stage(s)'] || normalizedRow['giai đoạn'] ||
+          normalizedRow['giai doan'] || ''
+        ).split(/[;,]/).map((value) => value.trim()).filter(Boolean).map((value) => {
+          const match = value.match(/stage\s*([1-5])/i) || value.match(/^([1-5])$/);
+          return match ? `Stage ${match[1]}` : value;
+        })
       };
     });
 
@@ -496,7 +505,7 @@ useEffect(() => {
 
     if (validStudents.length === 0) {
       setVocabImportError(
-        'Không tìm thấy dữ liệu hợp lệ. Hãy kiểm tra tên các cột trong file.'
+        'Không tìm thấy dữ liệu hợp lệ. Cần các cột: Mã học sinh, Họ và tên, Lớp; thêm cột Stage (Stage 1–Stage 5) để gán nội dung học tập.'
       );
       return;
     }
@@ -554,6 +563,7 @@ const handleImportRosterStudents = async () => {
         code,
         name: String(student.name).trim(),
         className: String(student.className).trim(),
+        stages: Array.isArray(student.stages) ? student.stages.filter((stage) => groupOptions.includes(stage)) : [],
         updatedAt: Date.now()
       });
 
@@ -735,9 +745,18 @@ const verifyStudentCode = async () => {
     }
 
     const studentData = studentSnap.data();
-   
-    // Load thông tin học sinh
-    setStudentName(studentData.name || '');
+const currentUser = auth.currentUser;
+
+if (!currentUser) {
+  alert('Không thể xác thực tài khoản. Vui lòng thử lại.');
+  return;
+}
+
+// Không kiểm tra hoặc ghi đè authUid.
+// Tiếp tục đăng nhập bằng mã học sinh đã xác minh trong roster.
+
+// Load thông tin học sinh
+setStudentName(studentData.name || '');
     setStudentClass(studentData.className || '');
     setStudentStages(studentData.stages || []);
     setIsStudentVerified(true);
@@ -1430,6 +1449,8 @@ const setPayload = {
 ) : mode === 'teacher' ? (
           /* ================= TEACHER MODE ================= */
 <TeacherDashboard
+  db={db}
+  appId={appId}
   sets={sets}
   selectedSetId={selectedSetId}
   setSelectedSetId={setSelectedSetId}
@@ -1498,6 +1519,9 @@ setRosterStages={setRosterStages}
         ) : (
           /* ================= STUDENT MODE ================= */
           <StudentArea
+            db={db}
+            appId={appId}
+            studentStages={studentStages}
             sets={studentSets}
             vocabTests={vocabTests}
             selectedSetId={selectedSetId}
@@ -1664,6 +1688,8 @@ const handleDeleteSelectedResults = async () => {
   );
 }
 function TeacherDashboard({
+  db,
+  appId,
   sets,
   selectedSetId,
   setSelectedSetId,
@@ -2576,7 +2602,14 @@ const handleDeleteSelectedResults = async () => {
   <BookOpen className="w-4 h-4" /> Bài kiểm tra ({vocabTests.length})
 </button>
 
-{/* THÊM NÚT MỚI NGAY TẠI ĐÂY */}
+<button
+  onClick={() => setActiveTab('grammar')}
+  className={`pb-3 px-4 font-semibold text-sm border-b-2 flex items-center gap-2 transition ${activeTab === 'grammar' ? 'border-violet-600 text-violet-600' : 'border-transparent text-slate-500 hover:text-slate-800'}`}
+>
+  <BookOpen className="w-4 h-4" /> Grammar Practice
+</button>
+
+{/* Student roster */}
 <button
   onClick={() => setActiveTab('roster')}
   className={`pb-3 px-4 font-semibold text-sm border-b-2 flex items-center gap-2 transition ${
@@ -2591,7 +2624,9 @@ const handleDeleteSelectedResults = async () => {
 </div>
 
 
-{activeTab === 'tests' ? (
+{activeTab === 'grammar' ? (
+  <GrammarPractice db={db} appId={appId} teacher={true} />
+) : activeTab === 'tests' ? (
   <div className="space-y-5">
     <div className="flex items-center justify-between gap-3">
       <div>
@@ -2810,19 +2845,43 @@ const handleDeleteSelectedResults = async () => {
       </p>
 
       {testQuestions.length === 0 ? (
-        <p className="mt-2 text-sm text-slate-500">
-          Chưa có câu hỏi nào.
-        </p>
+        <p className="mt-2 text-sm text-slate-500">Chưa có câu hỏi nào.</p>
       ) : (
-        <ol className="mt-3 list-decimal pl-5 space-y-2">
+        <div className="mt-4 space-y-3">
+          <div className="hidden grid-cols-[minmax(0,1.5fr)_minmax(0,1.4fr)_minmax(130px,0.8fr)_112px] gap-4 rounded-xl bg-slate-200/70 px-4 py-3 text-xs font-extrabold uppercase tracking-wide text-slate-600 lg:grid">
+            <span>Nội dung câu hỏi</span><span>Các lựa chọn</span><span>Đáp án đúng</span><span className="text-center">Thao tác</span>
+          </div>
           {testQuestions.map((question, index) => (
-            <li key={index} className="text-sm text-slate-700">
-              <span>{question.prompt}</span> <span className="text-slate-500">(Đáp án: {question.answer})</span>
-              <button type="button" onClick={() => handleEditTestQuestion(index)} className="ml-3 text-indigo-600 font-semibold">Sửa</button>
-              <button type="button" onClick={() => setTestQuestions(previous => previous.filter((_, i) => i !== index))} className="ml-3 text-red-600 font-semibold">Xóa</button>
-            </li>
+            <div key={`${index}-${question.prompt}`} className="grid gap-3 rounded-2xl border border-slate-200 bg-white p-4 shadow-sm transition hover:border-indigo-200 sm:p-5 lg:grid-cols-[minmax(0,1.5fr)_minmax(0,1.4fr)_minmax(130px,0.8fr)_112px] lg:items-start lg:gap-4">
+              <div className="min-w-0">
+                <p className="mb-1 text-xs font-bold uppercase tracking-wide text-slate-400">Câu {index + 1} · {question.type === 'mcq' ? 'Trắc nghiệm' : question.type === 'fill' ? 'Điền từ' : question.type || 'Câu hỏi'}</p>
+                <p className="break-words font-semibold leading-6 text-slate-800">{question.prompt}</p>
+              </div>
+              <div className="min-w-0">
+                <p className="mb-1 text-xs font-bold text-slate-400 lg:hidden">Các lựa chọn</p>
+                {question.type === 'mcq' && question.options?.length ? (
+                  <div className="grid gap-1.5">
+                    {question.options.map((option, optionIndex) => (
+                      <div key={`${optionIndex}-${option}`} className={`flex min-w-0 items-start gap-2 rounded-lg px-2.5 py-1.5 text-sm ${option === question.answer ? 'bg-emerald-50 font-semibold text-emerald-800 ring-1 ring-emerald-200' : 'bg-slate-50 text-slate-600'}`}>
+                        <span className="shrink-0 font-extrabold">{String.fromCharCode(65 + optionIndex)}.</span>
+                        <span className="min-w-0 break-words">{option || '—'}</span>
+                        {option === question.answer && <span className="ml-auto shrink-0 text-xs">✓</span>}
+                      </div>
+                    ))}
+                  </div>
+                ) : <span className="text-sm text-slate-400">Không có lựa chọn</span>}
+              </div>
+              <div className="min-w-0">
+                <p className="mb-1 text-xs font-bold text-slate-400 lg:hidden">Đáp án đúng</p>
+                <span className="inline-flex max-w-full break-words rounded-lg bg-emerald-100 px-3 py-2 text-sm font-extrabold text-emerald-800">{question.answer}</span>
+              </div>
+              <div className="flex items-center gap-2 lg:justify-end">
+                <button type="button" onClick={() => handleEditTestQuestion(index)} className="inline-flex min-w-[52px] items-center justify-center rounded-lg bg-indigo-50 px-3 py-2 text-sm font-bold text-indigo-700 transition hover:bg-indigo-100">Sửa</button>
+                <button type="button" onClick={() => { if (window.confirm(`Bạn có chắc muốn xóa câu ${index + 1}?`)) setTestQuestions(previous => previous.filter((_, i) => i !== index)); }} className="inline-flex min-w-[52px] items-center justify-center rounded-lg bg-rose-50 px-3 py-2 text-sm font-bold text-rose-700 transition hover:bg-rose-100">Xóa</button>
+              </div>
+            </div>
           ))}
-        </ol>
+        </div>
       )}
     </div>
 
@@ -3747,6 +3806,9 @@ const handleDeleteSelectedResults = async () => {
 }
 
 function StudentArea({
+  db,
+  appId,
+  studentStages = [],
   sets,
   vocabTests,
   selectedSetId,
@@ -3770,6 +3832,11 @@ function StudentArea({
 const [testAnswers, setTestAnswers] = useState({});
 const [testSubmitted, setTestSubmitted] = useState(false);
 const [testScoreData, setTestScoreData] = useState(null);
+
+useEffect(() => {
+  const grammarLink = new URLSearchParams(window.location.search).has('grammar');
+  if (grammarLink && isStudentVerified) setActiveStudyMode('grammar-practice');
+}, [isStudentVerified]);
 
 const selectedTest = vocabTests.find(
   (test) => test.id === selectedTestId
@@ -3829,7 +3896,7 @@ const handleSubmitAssignedTest = async () => {
 };
 
   const isSharedLink = new URLSearchParams(window.location.search).has('set');  
-  if (sets.length === 0 && isStudentVerified) {
+  if (sets.length === 0 && isStudentVerified && activeStudyMode !== 'grammar-practice') {
     return (
       <div className="py-16 text-center max-w-md mx-auto bg-white p-8 rounded-3xl shadow-sm border border-slate-200">
         <BookOpen className="w-16 h-16 text-indigo-300 mx-auto mb-4" />
@@ -3841,7 +3908,9 @@ const handleSubmitAssignedTest = async () => {
 
   return (
     <div className="space-y-6">
-       {activeStudyMode === 'menu' ? (
+       {activeStudyMode === 'grammar-practice' ? (
+  <GrammarPractice db={db} appId={appId} studentStages={studentStages} studentCode={studentCode} studentName={studentName} studentClass={studentClass} onBack={() => setActiveStudyMode('menu')} />
+) : activeStudyMode === 'menu' ? (
   <>
     {/* TEST REMINDERS */}
     {isStudentVerified && vocabTests.filter((test) =>
@@ -4068,6 +4137,37 @@ const handleSubmitAssignedTest = async () => {
         </div>
   </div>
     </div>
+
+    {/* TWO CORE LEARNING AREAS: VOCABULARY + GRAMMAR */}
+    <section className="grid grid-cols-1 gap-5 lg:grid-cols-2">
+      <article className="relative overflow-hidden rounded-3xl border border-violet-200 bg-gradient-to-br from-violet-50 via-white to-fuchsia-50 p-6 shadow-md shadow-violet-100/60 sm:p-7">
+        <div className="flex items-start gap-4">
+          <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl bg-violet-100 text-3xl">📚</div>
+          <div className="min-w-0 flex-1">
+            <p className="text-xs font-extrabold uppercase tracking-[0.16em] text-violet-600">KHU VỰC HỌC TẬP 01</p>
+            <h3 className="mt-1 text-xl font-black text-violet-950 sm:text-2xl">Vocabulary Practice</h3>
+            <p className="mt-2 text-sm leading-relaxed text-slate-600">Học từ mới và luyện tập qua 6 hoạt động tương tác: thẻ ghi nhớ, trắc nghiệm, nối từ, chính tả và nhiều hơn nữa.</p>
+          </div>
+        </div>
+        <button type="button" onClick={() => document.getElementById('vocabulary-study-modes')?.scrollIntoView({ behavior: 'smooth', block: 'start' })} className="mt-6 flex w-full items-center justify-center gap-2 rounded-xl bg-violet-600 px-4 py-3 font-extrabold text-white shadow-sm transition hover:bg-violet-700">
+          Vào Vocabulary <ArrowRight className="h-4 w-4" />
+        </button>
+      </article>
+
+      <article className="relative overflow-hidden rounded-3xl border border-blue-200 bg-gradient-to-br from-sky-50 via-white to-indigo-50 p-6 shadow-md shadow-blue-100/60 sm:p-7">
+        <div className="flex items-start gap-4">
+          <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl bg-blue-100 text-3xl">✏️</div>
+          <div className="min-w-0 flex-1">
+            <p className="text-xs font-extrabold uppercase tracking-[0.16em] text-blue-600">KHU VỰC HỌC TẬP 02</p>
+            <h3 className="mt-1 text-xl font-black text-blue-950 sm:text-2xl">Grammar Practice</h3>
+            <p className="mt-2 text-sm leading-relaxed text-slate-600">Ôn Language Recap theo Stage, làm bài luyện ngữ pháp và xem lại kết quả của em trong một khu vực riêng.</p>
+          </div>
+        </div>
+        <button type="button" onClick={() => { if (!isStudentVerified) { alert('Vui lòng xác nhận mã học sinh trước.'); return; } setActiveStudyMode('grammar-practice'); }} className="mt-6 flex w-full items-center justify-center gap-2 rounded-xl bg-blue-600 px-4 py-3 font-extrabold text-white shadow-sm transition hover:bg-blue-700">
+          Vào Grammar Practice <ArrowRight className="h-4 w-4" />
+        </button>
+      </article>
+    </section>
   </>
 ) : (
   /* COMPACT HEADER — WHEN STUDYING */
@@ -4104,7 +4204,7 @@ const handleSubmitAssignedTest = async () => {
 ) : !activeSet ? null : activeStudyMode === 'menu' ? (
       /* MODE SELECTION CARDS */
        
-<div className="space-y-6 animate-fadeIn">
+<div id="vocabulary-study-modes" className="space-y-6 animate-fadeIn scroll-mt-6">
 
   {/* Study dashboard header */}
   <div className="relative overflow-hidden rounded-[2rem] bg-gradient-to-br from-indigo-600 via-violet-600 to-fuchsia-500 p-6 text-white shadow-xl shadow-violet-200/60 sm:p-8">
@@ -4173,7 +4273,7 @@ const handleSubmitAssignedTest = async () => {
     </div>
 
     <span className="rounded-full bg-violet-100 px-3 py-1.5 text-xs font-bold text-violet-700">
-      5 cách học thú vị
+      6 cách học thú vị
     </span>
   </div>
 
