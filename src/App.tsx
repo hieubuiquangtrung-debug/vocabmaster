@@ -1494,6 +1494,7 @@ newGroupName={newGroupName}
 setNewGroupName={setNewGroupName}
 handleAddGroup={handleAddGroup}
 handleDeleteGroup={handleDeleteGroup}
+handleAddGroupName={handleAddGroupName}
   terms={terms}
   setTerms={setTerms}
   handleAddTermRow={handleAddTermRow}
@@ -1728,6 +1729,7 @@ function TeacherDashboard({
   setGroups,
   setSetGroups,
   groupOptions,
+  handleAddGroupName,
   newGroupName,
   setNewGroupName,
   handleAddGroup,
