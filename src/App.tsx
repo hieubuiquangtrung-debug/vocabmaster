@@ -31,6 +31,7 @@ import {
   UserCheck,
   Eye,
   Upload,
+  Search,
 } from 'lucide-react';
 import { QRCodeSVG } from 'qrcode.react';
 import TreasureHunt from './TreasureHunt';
@@ -227,6 +228,17 @@ const [testEnabled, setTestEnabled] = useState(false);
 const [newGroupName, setNewGroupName] = useState('');
 const GROUPS_DOC_ID = 'vocab_groups';
 
+const handleAddGroupName = async (rawName) => {
+  const name = String(rawName || '').trim();
+  if (!name) throw new Error('Tên nhóm không được để trống.');
+  if (groupOptions.some((group) => group.toLowerCase() === name.toLowerCase())) throw new Error('Nhóm đã tồn tại.');
+  const updatedGroups = [...groupOptions, name];
+  const groupsRef = doc(db, 'artifacts', appId, 'public', 'data', 'config', GROUPS_DOC_ID);
+  await setDoc(groupsRef, { groups: updatedGroups, updatedAt: Date.now() });
+  setGroupOptions(updatedGroups);
+  return name;
+};
+
 const handleAddGroup = async () => {
   const name = newGroupName.trim();
 
@@ -304,9 +316,19 @@ const handleDeleteGroup = async (groupName) => {
 
     setGroupOptions(updatedGroups);
 
-    setSetGroups((prev) =>
-      prev.filter((group) => group !== groupName)
-    );
+    // Gỡ nhóm khỏi Grammar Packs nhưng giữ nguyên nội dung bộ bài và kết quả cũ.
+    const grammarPacksRef = collection(db, 'artifacts', appId, 'public', 'data', 'grammar_packs');
+    const grammarPacksSnapshot = await getDocs(grammarPacksRef);
+    await Promise.all(grammarPacksSnapshot.docs.map(async (packDoc) => {
+      const data = packDoc.data();
+      const groups = Array.isArray(data.groups) && data.groups.length ? data.groups : (data.stage ? [data.stage] : []);
+      if (groups.includes(groupName)) {
+        const remaining = groups.filter((group) => group !== groupName);
+        await updateDoc(packDoc.ref, { groups: remaining, ...(remaining.length ? { stage: remaining[0] } : {}) });
+      }
+    }));
+
+    setSetGroups((prev) => prev.filter((group) => group !== groupName));
 
     // Gỡ khỏi vocabulary sets
     const setsRef = collection(
@@ -1754,6 +1776,11 @@ setRosterStages,
   const [showQRCode, setShowQRCode] = useState(false);
   const [isCreatingTest, setIsCreatingTest] = useState(false);
   const [testPanelTab, setTestPanelTab] = useState('list');
+  const [testSearch, setTestSearch] = useState('');
+  const [testStageFilter, setTestStageFilter] = useState('all');
+  const [testStatusFilter, setTestStatusFilter] = useState('all');
+  const [testPage, setTestPage] = useState(1);
+  const TESTS_PER_PAGE = 8;
   const [showAllTestResults, setShowAllTestResults] = useState(false);
   const [analyticsTestFilter, setAnalyticsTestFilter] = useState('');
   const [analyticsClassFilter, setAnalyticsClassFilter] = useState('');
@@ -1800,6 +1827,22 @@ const analyticsAverage = filteredAnalyticsResults.length ? Math.round(filteredAn
 const analyticsPassCount = filteredAnalyticsResults.filter(r => Number(r.percentage ?? (Number(r.total) ? Number(r.score || 0) / Number(r.total) * 100 : 0)) >= 70).length;
 const analyticsClasses = [...new Set(vocabTestResults.map(r => String(r.studentClass || '').trim()).filter(Boolean))].sort();
 
+const filteredVocabTests = vocabTests.filter((test) => {
+  const title = String(test.title || test.testTitle || '').toLowerCase();
+  const set = sets.find((item) => item.id === test.setId);
+  // Sync the test filter with the same dynamic group list used by Vocabulary Packs.
+  // Prefer the linked pack's groups; fall back to legacy stage fields for older records.
+  const linkedGroups = Array.isArray(set?.groups) && set.groups.length
+    ? set.groups
+    : [test.stage || set?.stage].filter(Boolean);
+  const search = testSearch.trim().toLowerCase();
+  const published = test.enabled !== false;
+  return (!search || title.includes(search) || String(set?.title || test.setTitle || '').toLowerCase().includes(search))
+    && (testStageFilter === 'all' || linkedGroups.some((group) => String(group).toLowerCase() === testStageFilter.toLowerCase()))
+    && (testStatusFilter === 'all' || (testStatusFilter === 'published' ? published : !published));
+});
+const totalTestPages = Math.max(1, Math.ceil(filteredVocabTests.length / TESTS_PER_PAGE));
+const pagedVocabTests = filteredVocabTests.slice((Math.min(testPage, totalTestPages) - 1) * TESTS_PER_PAGE, Math.min(testPage, totalTestPages) * TESTS_PER_PAGE);
 const [selectedTestSetId, setSelectedTestSetId] = useState('');
 const [testQuestionType, setTestQuestionType] = useState('mcq');
 const [testQuestionPrompt, setTestQuestionPrompt] = useState('');
@@ -2625,7 +2668,7 @@ const handleDeleteSelectedResults = async () => {
 
 
 {activeTab === 'grammar' ? (
-  <GrammarPractice db={db} appId={appId} teacher={true} />
+  <GrammarPractice db={db} appId={appId} teacher={true} groupOptions={groupOptions} onAddGroupName={handleAddGroupName} onDeleteGroup={handleDeleteGroup} />
 ) : activeTab === 'tests' ? (
   <div className="space-y-5">
     <div className="flex items-center justify-between gap-3">
@@ -2906,50 +2949,41 @@ const handleDeleteSelectedResults = async () => {
   </div>
 )}
 
-{!isCreatingTest && testPanelTab === 'list' && (vocabTests.length === 0 ? (
-  <div className="rounded-2xl border border-dashed border-slate-300 p-8 text-center">
-    <p className="font-semibold text-slate-700">
-      Chưa có bài kiểm tra nào
-    </p>
-    <p className="text-sm text-slate-500 mt-2">
-      Nhấn “Tạo đề mới” để bắt đầu.
-    </p>
-  </div>
-) : (
-  <div className="grid gap-4">
-    {vocabTests.map((test) => (
-      <div
-        key={test.id}
-        className="rounded-xl border border-slate-200 bg-white p-4"
-      >
-        <h3 className="font-bold text-slate-800">
-          {test.title || 'Bài kiểm tra chưa có tên'}
-        </h3>
-        <p className="text-sm text-slate-500 mt-1">
-          {test.questions?.length || 0} câu hỏi
-        </p>
-
-<div className="mt-3 flex flex-wrap gap-2">
-  <button
-    type="button"
-    onClick={() => handleEditTest(test)}
-    className="rounded-lg bg-indigo-50 px-3 py-2 text-sm font-semibold text-indigo-700 hover:bg-indigo-100"
-  >
-    Sửa đề &amp; đáp án
-  </button>
-
-  <button
-    type="button"
-    onClick={() => handleDeleteTest(test)}
-    className="rounded-lg bg-red-50 px-3 py-2 text-sm font-semibold text-red-600 hover:bg-red-100"
-  >
-    Xóa bài kiểm tra
-  </button>
-</div>
+{!isCreatingTest && testPanelTab === 'list' && (
+  <div className="space-y-4">
+    <div className="grid gap-3 rounded-2xl border border-slate-200 bg-white p-4 md:grid-cols-[minmax(0,1fr)_180px_180px]">
+      <label className="relative block">
+        <Search className="absolute left-3 top-3 h-4 w-4 text-slate-400" />
+        <input value={testSearch} onChange={(e) => { setTestSearch(e.target.value); setTestPage(1); }} placeholder="Tìm tên đề hoặc bộ từ vựng..." className="w-full rounded-xl border border-slate-200 py-2.5 pl-9 pr-3 text-sm outline-none focus:border-indigo-400 focus:ring-2 focus:ring-indigo-100" />
+      </label>
+      <select value={testStageFilter} onChange={(e) => { setTestStageFilter(e.target.value); setTestPage(1); }} className="rounded-xl border border-slate-200 px-3 py-2.5 text-sm text-slate-700">
+        <option value="all">Tất cả Stage / nhóm</option>{groupOptions.map(group => <option key={group} value={group.toLowerCase()}>{group}</option>)}
+      </select>
+      <select value={testStatusFilter} onChange={(e) => { setTestStatusFilter(e.target.value); setTestPage(1); }} className="rounded-xl border border-slate-200 px-3 py-2.5 text-sm text-slate-700">
+        <option value="all">Tất cả trạng thái</option><option value="published">Đang bật</option><option value="draft">Đang tắt</option>
+      </select>
+    </div>
+    <div className="flex flex-wrap items-center justify-between gap-2 text-sm text-slate-500"><span>Hiển thị {filteredVocabTests.length ? (Math.min(testPage, totalTestPages)-1)*TESTS_PER_PAGE+1 : 0}–{Math.min(testPage, totalTestPages)*TESTS_PER_PAGE > filteredVocabTests.length ? filteredVocabTests.length : Math.min(testPage, totalTestPages)*TESTS_PER_PAGE} trong {filteredVocabTests.length} đề</span><button type="button" onClick={() => { setTestSearch(''); setTestStageFilter('all'); setTestStatusFilter('all'); setTestPage(1); }} className="font-semibold text-indigo-600 hover:text-indigo-800">Xóa bộ lọc</button></div>
+    {filteredVocabTests.length === 0 ? (
+      <div className="rounded-2xl border border-dashed border-slate-300 bg-white p-10 text-center"><BookOpen className="mx-auto mb-3 h-9 w-9 text-indigo-300"/><p className="font-semibold text-slate-700">{vocabTests.length ? 'Không tìm thấy đề phù hợp' : 'Chưa có bài kiểm tra nào'}</p><p className="mt-1 text-sm text-slate-500">{vocabTests.length ? 'Thử đổi từ khóa hoặc bộ lọc.' : 'Nhấn “Tạo đề mới” để bắt đầu.'}</p></div>
+    ) : (
+      <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white">
+        <div className="hidden grid-cols-[minmax(0,1.8fr)_100px_130px_220px] gap-3 bg-slate-50 px-4 py-3 text-xs font-bold uppercase tracking-wide text-slate-500 md:grid"><span>Tên bài kiểm tra</span><span>Số câu</span><span>Trạng thái</span><span className="text-right">Thao tác</span></div>
+        <div className="divide-y divide-slate-100">{pagedVocabTests.map((test) => {
+          const set = sets.find((item) => item.id === test.setId);
+          const enabled = test.enabled !== false;
+          return <div key={test.id} className="grid gap-3 px-4 py-4 transition hover:bg-slate-50/70 md:grid-cols-[minmax(0,1.8fr)_100px_130px_220px] md:items-center">
+            <div className="min-w-0"><h3 className="truncate font-bold text-slate-800">{test.title || 'Bài kiểm tra chưa có tên'}</h3><p className="mt-1 truncate text-xs text-slate-500">{set?.title || test.setTitle || 'Chưa gắn bộ từ vựng'}{(set?.groups?.length ? set.groups : (set?.stage ? [set.stage] : [])).length ? ` · ${(set?.groups?.length ? set.groups : [set.stage]).join(', ')}` : ''}</p></div>
+            <div className="text-sm text-slate-600"><span className="md:hidden text-slate-400">Số câu: </span>{test.questions?.length || 0}</div>
+            <div><span className={`inline-flex rounded-full px-2.5 py-1 text-xs font-bold ${enabled ? 'bg-emerald-50 text-emerald-700' : 'bg-amber-50 text-amber-700'}`}><span className="mr-1">●</span>{enabled ? 'Đang bật' : 'Đang tắt'}</span></div>
+            <div className="flex flex-wrap gap-2 md:justify-end"><button type="button" onClick={() => handleEditTest(test)} className="rounded-lg bg-indigo-50 px-3 py-2 text-sm font-semibold text-indigo-700 hover:bg-indigo-100">Sửa</button><button type="button" onClick={() => handleDeleteTest(test)} className="rounded-lg bg-rose-50 px-3 py-2 text-sm font-semibold text-rose-600 hover:bg-rose-100">Xóa</button></div>
+          </div>;
+        })}</div>
+        {totalTestPages > 1 && <div className="flex items-center justify-between border-t border-slate-100 px-4 py-3"><span className="text-xs text-slate-500">Trang {Math.min(testPage,totalTestPages)} / {totalTestPages}</span><div className="flex gap-2"><button type="button" disabled={testPage <= 1} onClick={() => setTestPage(p => Math.max(1,p-1))} className="rounded-lg border px-3 py-1.5 text-sm disabled:opacity-40">Trước</button><button type="button" disabled={testPage >= totalTestPages} onClick={() => setTestPage(p => Math.min(totalTestPages,p+1))} className="rounded-lg border px-3 py-1.5 text-sm disabled:opacity-40">Sau</button></div></div>}
       </div>
-    ))}
+    )}
   </div>
-))}
+)}
 
 {/* KẾT QUẢ BÀI KIỂM TRA */}
 {!isCreatingTest && testPanelTab === 'results' && (
@@ -3909,7 +3943,7 @@ const handleSubmitAssignedTest = async () => {
   return (
     <div className="space-y-6">
        {activeStudyMode === 'grammar-practice' ? (
-  <GrammarPractice db={db} appId={appId} studentStages={studentStages} studentCode={studentCode} studentName={studentName} studentClass={studentClass} onBack={() => setActiveStudyMode('menu')} />
+  <GrammarPractice db={db} appId={appId} studentStages={studentStages} studentCode={studentCode} studentName={studentName} studentClass={studentClass} groupOptions={groupOptions} onBack={() => setActiveStudyMode('menu')} />
 ) : activeStudyMode === 'menu' ? (
   <>
     {/* TEST REMINDERS */}
@@ -4058,83 +4092,8 @@ const handleSubmitAssignedTest = async () => {
       )}
     </div>
 
-    {/* Lesson selection card */}
-    <div className="rounded-2xl border border-amber-100 bg-amber-50/70 p-5">
-      <div className="mb-4 flex items-center gap-3">
-        <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-amber-100 text-2xl">
-          🗂️
-        </div>
+    {/* Bộ từ vựng được chọn bên trong Vocabulary Practice, không hiển thị ở trang chủ. */}
 
-        <div>
-          <h3 className="font-extrabold text-slate-800">
-            Chọn bài học
-          </h3>
-          <p className="text-xs text-slate-500">
-            Chọn bộ từ vựng bạn muốn luyện tập
-          </p>
-        </div>
-      </div>
-
-      <label className="mb-2 block text-sm font-bold text-slate-700">
-        Bộ từ vựng
-      </label>
-
-      <select
-        value={activeSet?.id || ''}
-        disabled={isSharedLink}
-        onChange={(e) => {
-          setSelectedSetId(e.target.value);
-          setActiveStudyMode('menu');
-        }}
-        className={`w-full rounded-xl border-2 bg-white px-4 py-3 text-sm font-bold text-slate-800 outline-none transition focus:ring-4 focus:ring-amber-100 ${
-          isSharedLink
-            ? 'cursor-not-allowed border-amber-200'
-            : 'border-amber-100 focus:border-amber-400'
-        }`}
-      >
-        {sets.map((s) => (
-          <option key={s.id} value={s.id}>
-            {s.title} ({s.terms?.length || 0} từ)
-          </option>
-        ))}
-      </select>
-
-      {activeSet && (
-        <div className="mt-4 rounded-xl border border-amber-100 bg-white p-4">
-          <div className="flex items-center justify-between gap-3">
-            <div className="min-w-0">
-              <p className="text-xs font-semibold text-slate-500">
-                BÀI HỌC CỦA BẠN
-              </p>
-              <p className="mt-1 break-words font-extrabold text-slate-800">
-                {activeSet.title}
-              </p>
-            </div>
-
-            <div className="flex h-14 w-14 shrink-0 flex-col items-center justify-center rounded-2xl bg-amber-100 text-amber-700">
-              <span className="text-xl font-black leading-none">
-                {activeSet.terms?.length || 0}
-              </span>
-              <span className="mt-1 text-[10px] font-bold">
-                TỪ VỰNG
-              </span>
-            </div>
-          </div>
-
-          {activeSet.description && (
-            <p className="mt-3 text-xs leading-relaxed text-slate-500">
-              {activeSet.description}
-            </p>
-          )}
-        </div>
-      )}
-
-      {isSharedLink && (
-        <p className="mt-3 text-xs font-medium text-amber-700">
-          🔒 Bạn đang học qua liên kết được chia sẻ.
-        </p>
-      )}
-        </div>
   </div>
     </div>
 
@@ -4149,7 +4108,7 @@ const handleSubmitAssignedTest = async () => {
             <p className="mt-2 text-sm leading-relaxed text-slate-600">Học từ mới và luyện tập qua 6 hoạt động tương tác: thẻ ghi nhớ, trắc nghiệm, nối từ, chính tả và nhiều hơn nữa.</p>
           </div>
         </div>
-        <button type="button" onClick={() => document.getElementById('vocabulary-study-modes')?.scrollIntoView({ behavior: 'smooth', block: 'start' })} className="mt-6 flex w-full items-center justify-center gap-2 rounded-xl bg-violet-600 px-4 py-3 font-extrabold text-white shadow-sm transition hover:bg-violet-700">
+        <button type="button" onClick={() => { if (!isStudentVerified) { alert('Vui lòng xác nhận mã học sinh trước.'); return; } setActiveStudyMode('vocabulary-menu'); }} className="mt-6 flex w-full items-center justify-center gap-2 rounded-xl bg-violet-600 px-4 py-3 font-extrabold text-white shadow-sm transition hover:bg-violet-700">
           Vào Vocabulary <ArrowRight className="h-4 w-4" />
         </button>
       </article>
@@ -4201,8 +4160,8 @@ const handleSubmitAssignedTest = async () => {
     appId={appId}
     onBack={() => setShowStudentProgress(false)}
   />
-) : !activeSet ? null : activeStudyMode === 'menu' ? (
-      /* MODE SELECTION CARDS */
+) : !activeSet ? null : activeStudyMode === 'vocabulary-menu' ? (
+      /* MODE SELECTION CARDS — ONLY INSIDE VOCABULARY PRACTICE */
        
 <div id="vocabulary-study-modes" className="space-y-6 animate-fadeIn scroll-mt-6">
 
@@ -4256,6 +4215,15 @@ const handleSubmitAssignedTest = async () => {
         </div>
       </div>
     )}
+  </div>
+
+  <div className="grid gap-3 rounded-2xl border border-violet-100 bg-white p-4 shadow-sm sm:grid-cols-[minmax(0,1fr)_auto] sm:items-end">
+    <label className="block text-sm font-bold text-slate-700">Chọn bộ từ vựng
+      <select value={activeSet?.id || ''} disabled={isSharedLink} onChange={(e) => setSelectedSetId(e.target.value)} className="mt-1.5 w-full rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-sm font-semibold outline-none focus:border-violet-400 sm:min-w-[320px]">
+        {sets.map((set) => <option key={set.id} value={set.id}>{set.title} ({set.terms?.length || 0} từ)</option>)}
+      </select>
+    </label>
+    <button type="button" onClick={() => setActiveStudyMode('menu')} className="rounded-xl border border-slate-200 px-4 py-2.5 text-sm font-semibold text-slate-600 hover:bg-slate-50">← Trang chủ</button>
   </div>
 
   {/* Section heading */}
