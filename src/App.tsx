@@ -36,6 +36,7 @@ import {
 import { QRCodeSVG } from 'qrcode.react';
 import TreasureHunt from './TreasureHunt';
 import WordCafe from './WordCafe';
+import NomNom from './NomNom';
 import GrammarPractice from './GrammarPractice';
 import { initializeApp } from 'firebase/app';
 import { 
@@ -1799,9 +1800,27 @@ setRosterStages,
   const [editingQuestionIndex, setEditingQuestionIndex] = useState(-1);
   const [activeTab, setActiveTab] = useState('sets');
   const [selectedGroup, setSelectedGroup] = useState('');
-  const filteredSets = selectedGroup
-  ? sets.filter(set => (set.groups || []).includes(selectedGroup))
-  : sets;
+  const [setSearch, setSetSearch] = useState('');
+  const [setSort, setSetSort] = useState('recent');
+  const [setView, setSetView] = useState('grid');
+  const [setPage, setSetPage] = useState(1);
+  const SETS_PER_PAGE = 12;
+  const filteredSets = sets
+    .filter((set) => !selectedGroup || (set.groups || []).includes(selectedGroup))
+    .filter((set) => {
+      const q = setSearch.trim().toLocaleLowerCase('vi');
+      if (!q) return true;
+      const termsText = (set.terms || []).map((term) => `${term.term || ''} ${term.meaning || ''} ${term.definition || ''}`).join(' ');
+      return `${set.title || ''} ${set.description || ''} ${(set.groups || []).join(' ')} ${termsText}`.toLocaleLowerCase('vi').includes(q);
+    })
+    .sort((a, b) => {
+      if (setSort === 'az') return String(a.title || '').localeCompare(String(b.title || ''), 'vi');
+      if (setSort === 'words') return (b.terms?.length || 0) - (a.terms?.length || 0);
+      return (new Date(b.updatedAt || b.createdAt || 0).getTime() - new Date(a.updatedAt || a.createdAt || 0).getTime()) || String(b.id).localeCompare(String(a.id));
+    });
+  const totalSetPages = Math.max(1, Math.ceil(filteredSets.length / SETS_PER_PAGE));
+  const paginatedSets = filteredSets.slice((setPage - 1) * SETS_PER_PAGE, setPage * SETS_PER_PAGE);
+  useEffect(() => { if (setPage > totalSetPages) setSetPage(totalSetPages); }, [setPage, totalSetPages]);
     // Bộ lọc kết quả học sinh
 const [selectedStudent, setSelectedStudent] = useState('');
 const [dateFrom, setDateFrom] = useState('');
@@ -3076,94 +3095,109 @@ const handleDeleteSelectedResults = async () => {
   /* TAB 1: SETS LIST */
 
   <>
-    <div className="mb-5 bg-white rounded-2xl border border-slate-200 p-4">
+    {/* Search and library controls */}
+    <div className="mb-5 bg-white rounded-2xl border border-slate-200 p-4 sm:p-5 space-y-4">
+      <div className="flex flex-col lg:flex-row gap-3">
+        <div className="relative flex-1 min-w-0">
+          <Search className="w-5 h-5 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
+          <input
+            type="search"
+            value={setSearch}
+            onChange={(e) => { setSetSearch(e.target.value); setSetPage(1); }}
+            placeholder="Tìm tên bộ từ, bài học, mô tả hoặc từ vựng..."
+            className="w-full pl-10 pr-4 py-3 rounded-xl border border-slate-200 bg-slate-50 focus:bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-300 text-sm"
+          />
+          {setSearch && <button type="button" onClick={() => { setSetSearch(''); setSetPage(1); }} className="absolute right-3 top-1/2 -translate-y-1/2 text-xs font-semibold text-indigo-600 hover:text-indigo-800">Xóa</button>}
+        </div>
+        <div className="flex gap-2 items-center">
+          <select
+            value={setSort}
+            onChange={(e) => { setSetSort(e.target.value); setSetPage(1); }}
+            aria-label="Sắp xếp bộ từ"
+            className="flex-1 lg:w-44 px-3 py-3 rounded-xl border border-slate-200 bg-white text-slate-700 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+          >
+            <option value="recent">Mới cập nhật</option>
+            <option value="az">Tên A–Z</option>
+            <option value="words">Nhiều từ nhất</option>
+          </select>
+          <div className="flex rounded-xl border border-slate-200 p-1 bg-slate-50 shrink-0">
+            <button type="button" onClick={() => setSetView('grid')} title="Dạng lưới" aria-label="Dạng lưới" className={`p-2 rounded-lg ${setView === 'grid' ? 'bg-indigo-100 text-indigo-700 shadow-sm' : 'text-slate-500 hover:bg-white'}`}><Grid className="w-4 h-4" /></button>
+            <button type="button" onClick={() => setSetView('list')} title="Dạng danh sách" aria-label="Dạng danh sách" className={`px-3 py-2 rounded-lg text-xs font-semibold ${setView === 'list' ? 'bg-indigo-100 text-indigo-700 shadow-sm' : 'text-slate-500 hover:bg-white'}`}>Danh sách</button>
+          </div>
+        </div>
+      </div>
       <div className="flex flex-col sm:flex-row sm:items-center gap-3">
-        <label className="font-semibold text-slate-700 whitespace-nowrap">
-          Lọc theo lớp / nhóm:
-        </label>
-
+        <label className="font-semibold text-sm text-slate-700 whitespace-nowrap">Lọc theo lớp / nhóm</label>
         <select
           value={selectedGroup}
-          onChange={(e) => setSelectedGroup(e.target.value)}
-          className="flex-1 px-4 py-2.5 rounded-xl border border-slate-300 bg-white text-slate-700 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+          onChange={(e) => { setSelectedGroup(e.target.value); setSetPage(1); }}
+          className="flex-1 px-4 py-2.5 rounded-xl border border-slate-200 bg-white text-slate-700 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
         >
           <option value="">Tất cả lớp / nhóm</option>
-
-          {groupOptions.map((group) => (
-            <option key={group} value={group}>
-              {group}
-            </option>
-          ))}
+          {groupOptions.map((group) => <option key={group} value={group}>{group}</option>)}
         </select>
+        {(setSearch || selectedGroup) && <button type="button" onClick={() => { setSetSearch(''); setSelectedGroup(''); setSetPage(1); }} className="text-sm font-semibold text-indigo-600 hover:text-indigo-800 whitespace-nowrap">Xóa bộ lọc</button>}
       </div>
     </div>
 
-    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
-             {filteredSets.length === 0 ? (
-                <div className="col-span-full py-12 text-center bg-white rounded-2xl border border-dashed border-slate-300">
-                  <BookOpen className="w-12 h-12 text-slate-300 mx-auto mb-3" />
-                  <p className="text-slate-600 font-medium">Chưa có bộ từ vựng nào được tạo.</p>
-                  <button
-                    onClick={() => setIsCreatingSet(true)}
-                    className="mt-4 px-4 py-2 bg-indigo-600 text-white rounded-xl text-sm font-semibold hover:bg-indigo-700 transition"
-                  >
-                    + Tạo bộ từ đầu tiên
-                  </button>
+    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-4">
+      <div>
+        <h3 className="font-bold text-slate-800">Thư viện bộ từ</h3>
+        <p className="text-sm text-slate-500 mt-0.5">{filteredSets.length === sets.length ? `${sets.length} bộ từ` : `${filteredSets.length} / ${sets.length} bộ từ phù hợp`}</p>
+      </div>
+      <p className="text-xs text-slate-500">{filteredSets.length ? `Hiển thị ${(setPage - 1) * SETS_PER_PAGE + 1}–${Math.min(setPage * SETS_PER_PAGE, filteredSets.length)} trong ${filteredSets.length}` : 'Không có kết quả'}</p>
+    </div>
+
+    {filteredSets.length === 0 ? (
+      <div className="py-14 text-center bg-white rounded-2xl border border-dashed border-slate-300">
+        <Search className="w-10 h-10 text-slate-300 mx-auto mb-3" />
+        <p className="text-slate-700 font-semibold">Không tìm thấy bộ từ phù hợp</p>
+        <p className="text-slate-500 text-sm mt-1">Thử từ khóa khác hoặc xóa bộ lọc.</p>
+        <button type="button" onClick={() => { setSetSearch(''); setSelectedGroup(''); setSetPage(1); }} className="mt-4 px-4 py-2 bg-indigo-600 text-white rounded-xl text-sm font-semibold hover:bg-indigo-700">Xóa bộ lọc</button>
+      </div>
+    ) : (
+      <div className={setView === 'grid' ? 'grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4' : 'flex flex-col gap-2'}>
+        {paginatedSets.map((s) => (
+          <div key={s.id} className={`bg-white rounded-2xl border transition ${setView === 'grid' ? 'p-4 sm:p-5 min-h-[158px] flex flex-col justify-between' : 'p-3 sm:px-4 sm:py-3 flex flex-col sm:flex-row sm:items-center gap-3'} ${selectedSetId === s.id ? 'border-indigo-300 ring-2 ring-indigo-100' : 'border-slate-200 hover:border-indigo-200 hover:shadow-sm'}`}>
+            <div className={setView === 'list' ? 'flex items-center gap-3 min-w-0 flex-1' : 'min-w-0'}>
+              {setView === 'list' && <div className={`hidden sm:flex shrink-0 w-10 h-10 rounded-xl items-center justify-center ${selectedSetId === s.id ? 'bg-indigo-100 text-indigo-700' : 'bg-slate-100 text-slate-500'}`}><BookOpen className="w-5 h-5" /></div>}
+              <div className="min-w-0 flex-1">
+                <div className="flex items-start gap-2 justify-between">
+                  <h3 className="font-bold text-slate-900 text-base leading-snug break-words">{s.title}</h3>
+                  <span className="shrink-0 text-xs font-semibold px-2 py-1 bg-slate-100 text-slate-600 rounded-lg">{s.terms?.length || 0} từ</span>
                 </div>
-              ) : (
-                filteredSets.map(s => (
-                  <div 
-                    key={s.id} 
-                    className={`bg-white rounded-2xl border p-5 shadow-sm hover:shadow-md transition flex flex-col justify-between ${
-                      selectedSetId === s.id ? 'ring-2 ring-indigo-500 border-indigo-200' : 'border-slate-200'
-                    }`}
-                  >
-                    <div>
-                      <div className="flex justify-between items-start gap-2 mb-2">
-                        <h3 className="font-bold text-slate-900 text-lg line-clamp-1">{s.title}</h3>
-                        <span className="text-xs font-semibold px-2 py-0.5 bg-slate-100 text-slate-600 rounded-md">
-                          {s.terms?.length || 0} từ
-                        </span>
-                      </div>
-                      <p className="text-slate-500 text-xs line-clamp-2 mb-4 h-8">
-                        {s.description || 'Không có mô tả.'}
-                      </p>
-                    </div>
-
-                    <div className="pt-4 border-t border-slate-100 flex items-center justify-between gap-2">
-                      <div className="flex items-center gap-1">
-                        <button
-                          onClick={() => handleStartEditSet(s)}
-                          className="p-2 text-slate-500 hover:text-indigo-600 hover:bg-indigo-50 rounded-lg transition"
-                          title="Sửa bộ từ"
-                        >
-                          <Edit className="w-4 h-4" />
-                        </button>
-                        <button
-                          onClick={() => handleDeleteSet(s.id)}
-                          className="p-2 text-slate-500 hover:text-red-600 hover:bg-red-50 rounded-lg transition"
-                          title="Xóa bộ từ"
-                        >
-                          <Trash2 className="w-4 h-4" />
-                        </button>
-                      </div>
-
-                      <button
-                        onClick={() => setSelectedSetId(s.id)}
-                        className={`px-3 py-1.5 rounded-lg text-xs font-semibold flex items-center gap-1 transition ${
-                          selectedSetId === s.id
-                            ? 'bg-indigo-100 text-indigo-700'
-                            : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
-                        }`}
-                      >
-                        {selectedSetId === s.id ? 'Đang chọn' : 'Chọn bài này'}
-                      </button>
-                    </div>
-                  </div>
-                ))
-              )}
+                <p className={`text-slate-500 text-sm mt-1 ${setView === 'grid' ? 'line-clamp-2 min-h-10' : 'line-clamp-1'}`}>{s.description || 'Không có mô tả.'}</p>
+                {(s.groups || []).length > 0 && <div className="flex flex-wrap gap-1.5 mt-2">{s.groups.map((group) => <span key={group} className="text-[11px] font-medium px-2 py-0.5 rounded-md bg-indigo-50 text-indigo-700">{group}</span>)}</div>}
+              </div>
             </div>
-          </>
+            <div className={`flex items-center justify-between gap-2 ${setView === 'grid' ? 'pt-3 mt-3 border-t border-slate-100' : 'sm:shrink-0 sm:pl-3 sm:border-l sm:border-slate-100'}`}>
+              <div className="flex items-center gap-1">
+                <button type="button" onClick={() => handleStartEditSet(s)} className="p-2 text-slate-500 hover:text-indigo-600 hover:bg-indigo-50 rounded-lg transition" title="Sửa bộ từ"><Edit className="w-4 h-4" /></button>
+                <button type="button" onClick={() => handleDeleteSet(s.id)} className="p-2 text-slate-500 hover:text-red-600 hover:bg-red-50 rounded-lg transition" title="Xóa bộ từ"><Trash2 className="w-4 h-4" /></button>
+              </div>
+              <button type="button" onClick={() => setSelectedSetId(s.id)} className={`px-3 py-2 rounded-lg text-xs font-semibold transition whitespace-nowrap ${selectedSetId === s.id ? 'bg-indigo-100 text-indigo-700' : 'bg-slate-100 text-slate-700 hover:bg-slate-200'}`}>{selectedSetId === s.id ? 'Đang chọn' : 'Chọn bộ từ'}</button>
+            </div>
+          </div>
+        ))}
+      </div>
+    )}
+
+    {totalSetPages > 1 && (
+      <div className="mt-5 flex flex-col sm:flex-row items-center justify-between gap-3 bg-white border border-slate-200 rounded-xl p-3">
+        <p className="text-sm text-slate-500">Trang {setPage} / {totalSetPages}</p>
+        <div className="flex items-center gap-2">
+          <button type="button" disabled={setPage === 1} onClick={() => setSetPage((page) => Math.max(1, page - 1))} className="px-3 py-2 rounded-lg border border-slate-200 text-sm font-medium disabled:opacity-40 disabled:cursor-not-allowed hover:bg-slate-50">Trước</button>
+          {Array.from({ length: totalSetPages }, (_, i) => i + 1).filter((page) => page === 1 || page === totalSetPages || Math.abs(page - setPage) <= 1).map((page, i, visible) => (
+            <span key={page} className="contents">
+              {i > 0 && page - visible[i - 1] > 1 && <span className="px-1 text-slate-400">…</span>}
+              <button type="button" onClick={() => setSetPage(page)} className={`min-w-9 px-3 py-2 rounded-lg text-sm font-semibold ${setPage === page ? 'bg-indigo-600 text-white' : 'border border-slate-200 text-slate-600 hover:bg-slate-50'}`}>{page}</button>
+            </span>
+          ))}
+          <button type="button" disabled={setPage === totalSetPages} onClick={() => setSetPage((page) => Math.min(totalSetPages, page + 1))} className="px-3 py-2 rounded-lg border border-slate-200 text-sm font-medium disabled:opacity-40 disabled:cursor-not-allowed hover:bg-slate-50">Sau</button>
+        </div>
+      </div>
+    )}
+  </>
             
                     ) : activeTab === 'leaderboard' ? (
             /* TAB 2: LEADERBOARD & RESULTS */
@@ -3895,7 +3929,9 @@ const handleSubmitAssignedTest = async () => {
   const answerDetails = questions.map((question, index) => {
     const studentAnswer = String(testAnswers[index] || '').trim();
     const correctAnswer = String(question.answer || '').trim();
-    const isCorrect = studentAnswer.toLowerCase() === correctAnswer.toLowerCase();
+const isCorrect = correctAnswer
+  .split("|")
+  .some(answer => studentAnswer.trim().toLowerCase() === answer.trim().toLowerCase());
     return { questionPrompt: question.prompt || '', studentAnswer, correctAnswer, isCorrect };
   });
   const correctCount = answerDetails.filter(item => item.isCorrect).length;
@@ -4398,7 +4434,19 @@ const handleSubmitAssignedTest = async () => {
         setActiveStudyMode('word-cafe');
       }}
     />
-
+    <StudyCard
+      title="Nom Nom – Quái vật háu ăn"
+      desc="Chọn từ đúng, luyện nghĩa và chính tả cùng Nom!"
+      icon={<span className="text-4xl">👾</span>}
+      color="border-indigo-200 bg-gradient-to-br from-indigo-50 to-white hover:border-indigo-400"
+      onClick={() => {
+        if (!isStudentVerified) {
+          alert('Vui lòng nhập và xác nhận mã học sinh trước.');
+          return;
+        }
+        setActiveStudyMode('nomnom');
+      }}
+    />
   </div>
 
   {/* Student progress entry */}
@@ -4442,11 +4490,17 @@ const handleSubmitAssignedTest = async () => {
           onFinish={handleSaveScore}
         />
       ) : activeStudyMode === 'word-cafe' ? (
-        <WordCafe
-          activeSet={activeSet}
-          onBack={() => setActiveStudyMode('menu')}
-          onFinish={handleSaveScore}
-        />
+  <WordCafe
+    activeSet={activeSet}
+    onBack={() => setActiveStudyMode('menu')}
+    onFinish={handleSaveScore}
+  />
+) : activeStudyMode === 'nomnom' ? (
+  <NomNom
+    activeSet={activeSet}
+    onBack={() => setActiveStudyMode('menu')}
+    onFinish={handleSaveScore}
+  />
       ) : activeStudyMode === 'assigned-test' ? (
   <div className="space-y-6">
     {selectedTest ? (
