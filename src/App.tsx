@@ -4020,153 +4020,355 @@ const isCorrect = correctAnswer
       </section>
     )}
 
-    {/* STUDENT HOME — PROFILE & SET SELECTOR */}
-    <div className="relative overflow-hidden rounded-[2rem] border border-violet-100 bg-white shadow-lg shadow-violet-100/50">
-  {/* Welcome banner */}
-  <div className="relative overflow-hidden bg-gradient-to-br from-violet-600 via-purple-500 to-pink-400 px-6 py-7 sm:px-8 sm:py-8 text-white">
-    <div className="absolute -right-6 -top-8 h-36 w-36 rounded-full bg-white/10" />
-    <div className="absolute right-20 -bottom-12 h-28 w-28 rounded-full bg-yellow-300/20" />
+{/* ================= WORDORBIT-STYLE STUDENT HOME ================= */}
 
-    <div className="relative z-10 flex items-start gap-4">
-      <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl bg-white/20 text-3xl shadow-inner">
+<div className="space-y-6">
+
+  {/* HERO */}
+  <section className="relative min-h-[380px] overflow-hidden rounded-[2rem] border border-indigo-200 bg-gradient-to-br from-[#21175d] via-[#30227c] to-[#4a35b6] px-6 py-8 text-white shadow-2xl sm:px-10 sm:py-12">
+
+    {/* Background decorations */}
+    <div className="absolute inset-0 overflow-hidden">
+      <div className="absolute -left-10 -top-10 h-48 w-48 rounded-full bg-indigo-400/20 blur-3xl" />
+      <div className="absolute right-0 top-0 h-64 w-64 rounded-full bg-fuchsia-400/20 blur-3xl" />
+      <div className="absolute bottom-0 left-1/3 h-48 w-48 rounded-full bg-sky-300/10 blur-3xl" />
+
+      <div className="absolute left-[8%] top-[18%] text-2xl opacity-70">✦</div>
+      <div className="absolute left-[38%] top-[12%] text-xl text-yellow-300">✦</div>
+      <div className="absolute right-[20%] top-[18%] text-3xl text-yellow-300">✦</div>
+      <div className="absolute bottom-[18%] left-[48%] text-xl opacity-70">✧</div>
+      <div className="absolute bottom-[10%] right-[38%] text-2xl text-pink-300">✦</div>
+
+      {/* Planets */}
+      <div className="absolute -right-5 bottom-5 text-[120px] opacity-90 sm:text-[160px]">
+        🪐
+      </div>
+
+      <div className="absolute right-[22%] top-8 text-5xl sm:text-6xl">
+        🌙
+      </div>
+
+      <div className="absolute bottom-6 right-[40%] text-4xl opacity-80">
+        ⭐
+      </div>
+    </div>
+
+    <div className="relative z-10 flex min-h-[300px] flex-col justify-center">
+
+      <div className="mb-5 inline-flex w-fit items-center gap-2 rounded-full border border-white/20 bg-white/10 px-4 py-2 text-xs font-extrabold uppercase tracking-[0.16em] backdrop-blur-md">
+        <span className="flex h-2 w-2 rounded-full bg-yellow-300" />
+        VOCABMASTER UNIVERSE
+      </div>
+
+      <div className="max-w-2xl">
+        <p className="mb-3 text-sm font-bold text-indigo-200">
+          READY TO EXPLORE?
+        </p>
+
+        <h1 className="text-4xl font-black leading-[1.05] sm:text-5xl lg:text-6xl">
+          Học tiếng Anh
+          <br />
+          <span className="text-yellow-300">theo cách thú vị hơn.</span>
+        </h1>
+
+        <p className="mt-5 max-w-xl text-base leading-relaxed text-indigo-100 sm:text-lg">
+          Xin chào,{' '}
+          <span className="font-black text-white">
+            {isStudentVerified ? studentName : 'bạn nhỏ'}
+          </span>
+          ! Khám phá từ vựng, luyện ngữ pháp và chinh phục những thử thách mới.
+        </p>
+
+        {!isStudentVerified ? (
+          <div className="mt-7 max-w-md rounded-2xl border border-white/20 bg-white/10 p-4 backdrop-blur-md">
+
+            <p className="mb-3 text-sm font-bold">
+              Nhập mã học sinh để bắt đầu hành trình
+            </p>
+
+            <div className="flex flex-col gap-2 sm:flex-row">
+              <input
+                type="text"
+                placeholder="Mã học sinh..."
+                value={studentCode}
+                onChange={(e) => setStudentCode(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter') {
+                    verifyStudentCode();
+                  }
+                }}
+                className="min-w-0 flex-1 rounded-xl border-0 bg-white px-4 py-3 text-sm font-bold text-slate-800 outline-none ring-0 placeholder:text-slate-400"
+              />
+
+              <button
+                type="button"
+                onClick={verifyStudentCode}
+                className="rounded-xl bg-yellow-300 px-5 py-3 text-sm font-black text-indigo-950 shadow-lg transition hover:scale-[1.03] hover:bg-yellow-200"
+              >
+                Bắt đầu →
+              </button>
+            </div>
+
+          </div>
+        ) : (
+          <div className="mt-7 flex flex-wrap gap-3">
+
+            <div className="rounded-2xl border border-white/15 bg-white/10 px-4 py-3 backdrop-blur-md">
+              <p className="text-[10px] font-bold uppercase tracking-wider text-indigo-200">
+                Học sinh
+              </p>
+
+              <p className="mt-1 font-black">
+                {studentName}
+              </p>
+            </div>
+
+            <div className="rounded-2xl border border-white/15 bg-white/10 px-4 py-3 backdrop-blur-md">
+              <p className="text-[10px] font-bold uppercase tracking-wider text-indigo-200">
+                Lớp
+              </p>
+
+              <p className="mt-1 font-black">
+                {studentClass || '—'}
+              </p>
+            </div>
+
+            <div className="rounded-2xl border border-white/15 bg-white/10 px-4 py-3 backdrop-blur-md">
+              <p className="text-[10px] font-bold uppercase tracking-wider text-indigo-200">
+                Trạng thái
+              </p>
+
+              <p className="mt-1 font-black text-emerald-300">
+                ✓ Sẵn sàng học
+              </p>
+            </div>
+
+          </div>
+        )}
+      </div>
+
+    </div>
+  </section>
+
+
+  {/* SECTION TITLE */}
+  <div className="flex flex-col justify-between gap-3 sm:flex-row sm:items-end">
+
+    <div>
+      <p className="text-xs font-black uppercase tracking-[0.18em] text-violet-600">
+        LEARNING ZONES
+      </p>
+
+      <h2 className="mt-1 text-2xl font-black text-slate-900 sm:text-3xl">
+        Hôm nay bạn muốn khám phá gì?
+      </h2>
+
+      <p className="mt-2 text-sm text-slate-500">
+        Chọn khu vực học tập và bắt đầu ngay.
+      </p>
+    </div>
+
+    {isStudentVerified && (
+      <div className="inline-flex items-center gap-2 rounded-full bg-emerald-50 px-4 py-2 text-sm font-bold text-emerald-700">
+        <span className="text-lg">🚀</span>
+        Sẵn sàng khám phá!
+      </div>
+    )}
+
+  </div>
+
+
+  {/* LEARNING CARDS */}
+  <section className="grid grid-cols-1 gap-6 lg:grid-cols-2">
+
+    {/* VOCABULARY */}
+    <article className="group relative min-h-[420px] overflow-hidden rounded-[2rem] border border-violet-200 bg-gradient-to-br from-violet-100 via-white to-fuchsia-100 p-7 shadow-xl shadow-violet-100/70 transition duration-300 hover:-translate-y-1 hover:shadow-2xl">
+
+      {/* Illustration background */}
+      <div className="absolute -right-8 -top-8 text-[160px] opacity-[0.13] transition duration-500 group-hover:scale-110">
         📚
       </div>
 
-      <div className="min-w-0 flex-1">
-        <div className="mb-1 text-xs font-bold uppercase tracking-[0.18em] text-purple-100">
-          VOCABMASTER • LEARN & PLAY
+      <div className="absolute bottom-6 right-8 text-7xl transition duration-500 group-hover:-rotate-6 group-hover:scale-110">
+        🦊
+      </div>
+
+      <div className="absolute right-28 top-20 text-3xl text-yellow-400">
+        ✦
+      </div>
+
+      <div className="absolute right-12 top-40 text-xl text-pink-400">
+        ✦
+      </div>
+
+      <div className="relative z-10 flex h-full flex-col">
+
+        <div className="flex h-16 w-16 items-center justify-center rounded-[1.25rem] bg-violet-600 text-3xl shadow-lg shadow-violet-300">
+          📚
         </div>
 
-        <h2 className="text-2xl font-black leading-tight sm:text-3xl">
-          Xin chào, {isStudentVerified ? studentName : 'bạn nhỏ'}! 👋
-        </h2>
+        <div className="mt-7">
 
-        <p className="mt-2 max-w-xl text-sm leading-relaxed text-white/90">
-          Sẵn sàng khám phá thế giới từ vựng chưa? Chọn bài học và bắt đầu hành trình của bạn nhé!
+          <p className="text-xs font-black uppercase tracking-[0.18em] text-violet-600">
+            EXPLORE WORDS
+          </p>
+
+          <h3 className="mt-2 text-3xl font-black text-violet-950">
+            Vocabulary
+            <br />
+            Practice
+          </h3>
+
+          <p className="mt-4 max-w-sm text-sm leading-relaxed text-slate-600">
+            Học từ mới thông qua flashcards, quiz, matching, spelling,
+            NomNom và những hoạt động tương tác thú vị.
+          </p>
+
+        </div>
+
+        <div className="mt-6 flex flex-wrap gap-2">
+
+          {['Flashcards', 'Quiz', 'Matching', 'Spelling', 'NomNom'].map((item) => (
+            <span
+              key={item}
+              className="rounded-full border border-violet-200 bg-white/80 px-3 py-1.5 text-xs font-bold text-violet-700"
+            >
+              {item}
+            </span>
+          ))}
+
+        </div>
+
+        <button
+          type="button"
+          onClick={() => {
+            if (!isStudentVerified) {
+              alert('Vui lòng xác nhận mã học sinh trước.');
+              return;
+            }
+
+            setActiveStudyMode('vocabulary-menu');
+          }}
+          className="mt-auto flex w-full items-center justify-center gap-2 rounded-2xl bg-violet-600 px-5 py-4 font-black text-white shadow-lg shadow-violet-300 transition hover:bg-violet-700 hover:shadow-xl active:scale-[0.98]"
+        >
+          Khám phá Vocabulary
+          <ArrowRight className="h-5 w-5" />
+        </button>
+
+      </div>
+    </article>
+
+
+    {/* GRAMMAR */}
+    <article className="group relative min-h-[420px] overflow-hidden rounded-[2rem] border border-sky-200 bg-gradient-to-br from-sky-100 via-white to-blue-100 p-7 shadow-xl shadow-sky-100/70 transition duration-300 hover:-translate-y-1 hover:shadow-2xl">
+
+      <div className="absolute -right-8 -top-8 text-[160px] opacity-[0.13] transition duration-500 group-hover:scale-110">
+        ✏️
+      </div>
+
+      <div className="absolute bottom-6 right-8 text-7xl transition duration-500 group-hover:rotate-6 group-hover:scale-110">
+        👩‍🚀
+      </div>
+
+      <div className="absolute right-28 top-20 text-3xl text-yellow-400">
+        ✦
+      </div>
+
+      <div className="absolute right-12 top-40 text-xl text-sky-400">
+        ✦
+      </div>
+
+      <div className="relative z-10 flex h-full flex-col">
+
+        <div className="flex h-16 w-16 items-center justify-center rounded-[1.25rem] bg-blue-600 text-3xl shadow-lg shadow-blue-300">
+          ✏️
+        </div>
+
+        <div className="mt-7">
+
+          <p className="text-xs font-black uppercase tracking-[0.18em] text-blue-600">
+            MASTER GRAMMAR
+          </p>
+
+          <h3 className="mt-2 text-3xl font-black text-blue-950">
+            Grammar
+            <br />
+            Practice
+          </h3>
+
+          <p className="mt-4 max-w-sm text-sm leading-relaxed text-slate-600">
+            Ôn Language Recap, luyện các cấu trúc ngữ pháp và hoàn thành
+            những bài tập được giáo viên giao.
+          </p>
+
+        </div>
+
+        <div className="mt-6 flex flex-wrap gap-2">
+
+          {['Language Recap', 'Practice', 'Tests', 'Results'].map((item) => (
+            <span
+              key={item}
+              className="rounded-full border border-blue-200 bg-white/80 px-3 py-1.5 text-xs font-bold text-blue-700"
+            >
+              {item}
+            </span>
+          ))}
+
+        </div>
+
+        <button
+          type="button"
+          onClick={() => {
+            if (!isStudentVerified) {
+              alert('Vui lòng xác nhận mã học sinh trước.');
+              return;
+            }
+
+            setActiveStudyMode('grammar-practice');
+          }}
+          className="mt-auto flex w-full items-center justify-center gap-2 rounded-2xl bg-blue-600 px-5 py-4 font-black text-white shadow-lg shadow-blue-300 transition hover:bg-blue-700 hover:shadow-xl active:scale-[0.98]"
+        >
+          Khám phá Grammar
+          <ArrowRight className="h-5 w-5" />
+        </button>
+
+      </div>
+    </article>
+
+  </section>
+
+
+  {/* BOTTOM EXPLORATION BANNER */}
+  <section className="relative overflow-hidden rounded-[2rem] border border-indigo-100 bg-gradient-to-r from-indigo-50 via-violet-50 to-sky-50 p-6 sm:p-8">
+
+    <div className="absolute -right-5 -bottom-10 text-[150px] opacity-10">
+      🚀
+    </div>
+
+    <div className="relative z-10 flex flex-col gap-5 sm:flex-row sm:items-center sm:justify-between">
+
+      <div>
+        <p className="text-xs font-black uppercase tracking-[0.18em] text-indigo-500">
+          YOUR LEARNING JOURNEY
+        </p>
+
+        <h3 className="mt-2 text-xl font-black text-slate-900 sm:text-2xl">
+          Mỗi bài học là một hành tinh mới để khám phá. 🌎
+        </h3>
+
+        <p className="mt-2 text-sm text-slate-600">
+          Học từng chút một, luyện tập thường xuyên và chinh phục thêm nhiều từ mới.
         </p>
       </div>
-    </div>
 
-    <div className="relative z-10 mt-5 flex flex-wrap gap-2">
-      <span className="rounded-full bg-white/20 px-3 py-1.5 text-xs font-bold backdrop-blur-sm">
-        ✨ Học vui mỗi ngày
-      </span>
-
-      <span className="rounded-full bg-white/20 px-3 py-1.5 text-xs font-bold backdrop-blur-sm">
-        🎯 Chinh phục từ vựng
-      </span>
-    </div>
-  </div>
-
-  {/* Student information and lesson selection */}
-  <div className="grid grid-cols-1 gap-5 p-5 sm:p-7 lg:grid-cols-2">
-
-    {/* Student verification card */}
-    <div className="rounded-2xl border border-sky-100 bg-sky-50/70 p-5">
-      <div className="mb-4 flex items-center gap-3">
-        <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-sky-100 text-sky-700">
-          <UserCheck className="h-5 w-5" />
-        </div>
-
-        <div>
-          <h3 className="font-extrabold text-slate-800">
-            Thông tin học sinh
-          </h3>
-          <p className="text-xs text-slate-500">
-            Xác nhận để lưu kết quả học tập
-          </p>
-        </div>
+      <div className="flex shrink-0 items-center gap-2 text-2xl">
+        🌟 📚 🚀 🪐
       </div>
 
-      {!isStudentVerified ? (
-        <>
-          <label className="mb-2 block text-sm font-bold text-slate-700">
-            Mã học sinh
-          </label>
-
-          <input
-            type="text"
-            placeholder="Ví dụ: 5A1_NAM01"
-            value={studentCode}
-            onChange={(e) => setStudentCode(e.target.value)}
-            onKeyDown={(e) => {
-              if (e.key === 'Enter') {
-                verifyStudentCode();
-              }
-            }}
-            className="w-full rounded-xl border-2 border-sky-100 bg-white px-4 py-3 text-sm font-semibold text-slate-800 outline-none transition placeholder:font-normal placeholder:text-slate-400 focus:border-sky-400 focus:ring-4 focus:ring-sky-100"
-          />
-
-          <button
-            type="button"
-            onClick={verifyStudentCode}
-            className="mt-3 w-full rounded-xl bg-sky-500 px-4 py-3 text-sm font-extrabold text-white shadow-md shadow-sky-200 transition hover:bg-sky-600 active:scale-[0.98]"
-          >
-            Xác nhận mã học sinh →
-          </button>
-
-          <p className="mt-3 text-xs leading-relaxed text-slate-500">
-            💡 Nhập mã được giáo viên cung cấp để xác nhận tài khoản của bạn.
-          </p>
-        </>
-      ) : (
-        <div className="rounded-xl border border-emerald-200 bg-white p-4">
-          <div className="flex items-center gap-3">
-            <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-emerald-100 text-2xl">
-              🎉
-            </div>
-
-            <div className="min-w-0 flex-1">
-              <p className="break-words font-extrabold text-slate-800">
-                {studentName}
-              </p>
-              <p className="mt-1 text-xs font-medium text-slate-500">
-                Mã: {studentCode}
-              </p>
-              <span className="mt-2 inline-flex rounded-full bg-emerald-100 px-2.5 py-1 text-xs font-bold text-emerald-700">
-                ✓ Đã xác nhận · {studentClass}
-              </span>
-            </div>
-          </div>
-        </div>
-      )}
     </div>
+  </section>
 
-    {/* Bộ từ vựng được chọn bên trong Vocabulary Practice, không hiển thị ở trang chủ. */}
-
-  </div>
-    </div>
-
-    {/* TWO CORE LEARNING AREAS: VOCABULARY + GRAMMAR */}
-    <section className="grid grid-cols-1 gap-5 lg:grid-cols-2">
-      <article className="relative overflow-hidden rounded-3xl border border-violet-200 bg-gradient-to-br from-violet-50 via-white to-fuchsia-50 p-6 shadow-md shadow-violet-100/60 sm:p-7">
-        <div className="flex items-start gap-4">
-          <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl bg-violet-100 text-3xl">📚</div>
-          <div className="min-w-0 flex-1">
-            <p className="text-xs font-extrabold uppercase tracking-[0.16em] text-violet-600">KHU VỰC HỌC TẬP 01</p>
-            <h3 className="mt-1 text-xl font-black text-violet-950 sm:text-2xl">Vocabulary Practice</h3>
-            <p className="mt-2 text-sm leading-relaxed text-slate-600">Học từ mới và luyện tập qua 6 hoạt động tương tác: thẻ ghi nhớ, trắc nghiệm, nối từ, chính tả và nhiều hơn nữa.</p>
-          </div>
-        </div>
-        <button type="button" onClick={() => { if (!isStudentVerified) { alert('Vui lòng xác nhận mã học sinh trước.'); return; } setActiveStudyMode('vocabulary-menu'); }} className="mt-6 flex w-full items-center justify-center gap-2 rounded-xl bg-violet-600 px-4 py-3 font-extrabold text-white shadow-sm transition hover:bg-violet-700">
-          Vào Vocabulary <ArrowRight className="h-4 w-4" />
-        </button>
-      </article>
-
-      <article className="relative overflow-hidden rounded-3xl border border-blue-200 bg-gradient-to-br from-sky-50 via-white to-indigo-50 p-6 shadow-md shadow-blue-100/60 sm:p-7">
-        <div className="flex items-start gap-4">
-          <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl bg-blue-100 text-3xl">✏️</div>
-          <div className="min-w-0 flex-1">
-            <p className="text-xs font-extrabold uppercase tracking-[0.16em] text-blue-600">KHU VỰC HỌC TẬP 02</p>
-            <h3 className="mt-1 text-xl font-black text-blue-950 sm:text-2xl">Grammar Practice</h3>
-            <p className="mt-2 text-sm leading-relaxed text-slate-600">Ôn Language Recap theo Stage, làm bài luyện ngữ pháp và xem lại kết quả của em trong một khu vực riêng.</p>
-          </div>
-        </div>
-        <button type="button" onClick={() => { if (!isStudentVerified) { alert('Vui lòng xác nhận mã học sinh trước.'); return; } setActiveStudyMode('grammar-practice'); }} className="mt-6 flex w-full items-center justify-center gap-2 rounded-xl bg-blue-600 px-4 py-3 font-extrabold text-white shadow-sm transition hover:bg-blue-700">
-          Vào Grammar Practice <ArrowRight className="h-4 w-4" />
-        </button>
-      </article>
-    </section>
+</div>
   </>
 ) : (
   /* COMPACT HEADER — WHEN STUDYING */
