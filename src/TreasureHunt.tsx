@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { ArrowLeft, Compass, Crown, Gem, Heart, Map, RotateCcw, Shield, Sparkles, Star, Trophy, Users, Volume2 } from 'lucide-react';
 
 type VocabTerm = {
@@ -53,7 +53,7 @@ const teamPalette = [
 ];
 
 export default function TreasureHunt({ activeSet, onBack, onFinish }: TreasureHuntProps) {
-  const questions = useMemo(() => buildQuestions(activeSet?.terms || []), [activeSet?.id, activeSet?.terms]);
+  const [questions, setQuestions] = useState(() => buildQuestions(activeSet?.terms || []));
   const [screen, setScreen] = useState<'setup' | 'playing' | 'results'>('setup');
   const [playMode, setPlayMode] = useState<'solo' | 'teams'>('solo');
   const [teamCount, setTeamCount] = useState(2);
@@ -70,12 +70,59 @@ export default function TreasureHunt({ activeSet, onBack, onFinish }: TreasureHu
   const [finishedAt, setFinishedAt] = useState<number | null>(null);
   const [earned, setEarned] = useState<string[]>([]);
 
+  const progressKey = `vocabmaster_treasure-hunt_progress_${activeSet?.id || 'default'}`;
+  const [pendingProgress, setPendingProgress] = useState<any>(null);
+  const [progressReady, setProgressReady] = useState(false);
+  useEffect(() => {
+    setProgressReady(false);
+    setScreen('setup');
+    setQuestions(buildQuestions(activeSet?.terms || []));
+    try {
+      const data = JSON.parse(localStorage.getItem(progressKey) || 'null');
+      setPendingProgress(data?.screen === 'playing' && Array.isArray(data.questions) && data.questions.length ? data : null);
+    } catch { setPendingProgress(null); localStorage.removeItem(progressKey); }
+    setProgressReady(true);
+  }, [progressKey]);
+  useEffect(() => {
+    if (!progressReady || pendingProgress) return;
+    if (screen === 'playing') {
+      try { localStorage.setItem(progressKey, JSON.stringify({ screen, questions, playMode, teamCount, roundCount, questionIndex, selected, revealed, soloScore, teamScores, teamTurn, streak, bestStreak, startedAt, finishedAt, earned })); } catch { /* storage unavailable */ }
+    } else if (screen === 'results') localStorage.removeItem(progressKey);
+  }, [progressReady, pendingProgress, progressKey, screen, questions, playMode, teamCount, roundCount, questionIndex, selected, revealed, soloScore, teamScores, teamTurn, streak, bestStreak, startedAt, finishedAt, earned]);
+  const resumeGame = () => {
+    const data = pendingProgress;
+    if (!data) return;
+    setQuestions(data.questions);
+    setPlayMode(data.playMode);
+    setTeamCount(data.teamCount);
+    setRoundCount(data.roundCount);
+    setQuestionIndex(data.questionIndex);
+    setSelected(data.selected);
+    setRevealed(data.revealed);
+    setSoloScore(data.soloScore);
+    setTeamScores(data.teamScores);
+    setTeamTurn(data.teamTurn);
+    setStreak(data.streak);
+    setBestStreak(data.bestStreak);
+    setStartedAt(data.startedAt);
+    setFinishedAt(data.finishedAt);
+    setEarned(data.earned);
+    setScreen('playing');
+    setPendingProgress(null);
+  };
+  const restartSavedGame = () => {
+    localStorage.removeItem(progressKey);
+    setPendingProgress(null);
+    setScreen('setup');
+  };
   const rounds = Math.min(Math.max(1, roundCount || 1), questions.length);
   const question = questions[questionIndex];
   const currentTeam = teamPalette[teamTurn % teamCount];
   const isLastQuestion = questionIndex + 1 >= rounds;
 
   const startGame = () => {
+    localStorage.removeItem(progressKey);
+    setPendingProgress(null);
     setQuestionIndex(0);
     setSelected('');
     setRevealed(false);
@@ -167,7 +214,8 @@ export default function TreasureHunt({ activeSet, onBack, onFinish }: TreasureHu
         </div>
       </div>
 
-      {screen === 'setup' && (
+    {pendingProgress && <div className="rounded-2xl border border-violet-200 bg-violet-50 p-5 shadow-sm"><h2 className="text-lg font-black text-violet-900">📌 Bạn có bài làm đang dở!</h2><p className="mt-2 text-sm text-violet-800">Em muốn tiếp tục từ câu trước hay làm bài mới?</p><div className="mt-4 flex flex-wrap gap-3"><button onClick={resumeGame} className="rounded-xl bg-violet-600 px-5 py-3 font-bold text-white">▶ Tiếp tục bài đang làm</button><button onClick={restartSavedGame} className="rounded-xl border border-violet-300 bg-white px-5 py-3 font-bold text-violet-700">↻ Làm bài mới</button></div></div>}
+      {screen === 'setup' && !pendingProgress && (
         <div className="grid gap-5 lg:grid-cols-[1fr_0.8fr]">
           <section className="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm sm:p-7">
             <div className="flex items-center gap-3"><div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-amber-100 text-2xl">🧭</div><div><h2 className="text-xl font-black text-slate-800">Chọn hành trình</h2><p className="text-sm text-slate-500">Chơi một mình hoặc thi đua theo đội.</p></div></div>
@@ -202,7 +250,7 @@ export default function TreasureHunt({ activeSet, onBack, onFinish }: TreasureHu
             <div className="mt-6 rounded-[1.5rem] bg-gradient-to-br from-indigo-50 via-violet-50 to-fuchsia-50 p-5 text-center sm:p-8"><div className="mx-auto flex h-16 w-16 items-center justify-center rounded-2xl bg-white text-3xl shadow-sm">{questionIndex === rounds - 1 ? '🧰' : ['🗝️','🦜','🌴','🧭','💎'][questionIndex % 5]}</div><p className="mt-4 text-xs font-black uppercase tracking-[0.2em] text-violet-500">Find the hidden word</p><h2 className="mx-auto mt-3 max-w-2xl text-xl font-black leading-relaxed text-slate-800 sm:text-2xl">Từ nào phù hợp với nghĩa hoặc gợi ý dưới đây?</h2><p className="mx-auto mt-3 max-w-xl text-lg font-bold leading-relaxed text-indigo-900 sm:text-xl">“{question.meaning}”</p>{question.example && question.example !== question.meaning && <p className="mt-3 text-sm italic text-slate-500">Ví dụ: {question.example}</p>}</div>
             <div className="mt-5 grid grid-cols-2 gap-3">{question.options.map((option, i) => { const isCorrect = option === question.answer; const isSelected = option === selected; let style = 'border-slate-200 bg-white text-slate-800 hover:border-violet-300 hover:bg-violet-50'; if (revealed && isCorrect) style = 'border-emerald-400 bg-emerald-50 text-emerald-800 ring-2 ring-emerald-100'; else if (revealed && isSelected) style = 'border-rose-300 bg-rose-50 text-rose-800'; return <button key={`${questionIndex}-${option}`} disabled={revealed} onClick={() => chooseAnswer(option)} className={`min-h-16 rounded-2xl border-2 p-3 text-left font-extrabold transition sm:min-h-20 sm:p-4 ${style} disabled:cursor-default`}><span className="mb-2 flex h-7 w-7 items-center justify-center rounded-lg bg-black/5 text-xs font-black">{String.fromCharCode(65 + i)}</span><span className="break-words text-sm sm:text-base">{option}</span>{revealed && isCorrect && <span className="ml-2">✓</span>}</button>; })}</div>
             {revealed && <div className={`mt-4 rounded-2xl border p-4 ${selected === question.answer ? 'border-emerald-200 bg-emerald-50' : 'border-amber-200 bg-amber-50'}`}><div className="flex items-start gap-3"><div className="text-2xl">{selected === question.answer ? '🎉' : '🧭'}</div><div className="min-w-0 flex-1"><p className={`font-black ${selected === question.answer ? 'text-emerald-800' : 'text-amber-900'}`}>{selected === question.answer ? 'Chính xác! Bạn tìm thấy ngọc rồi!' : `Chưa đúng! Đáp án là “${question.answer}”.`}</p><p className="mt-1 text-sm text-slate-600">{selected === question.answer ? 'Bạn nhận được điểm thưởng. Tiếp tục khám phá nhé!' : 'Đừng lo, mỗi câu hỏi là một cơ hội học thêm từ mới.'}</p></div><button onClick={() => speak(question.answer)} title="Nghe phát âm" className="rounded-xl bg-white p-2.5 text-violet-700 shadow-sm"><Volume2 size={19}/></button></div></div>}
-            <div className="mt-5 flex flex-col-reverse gap-3 sm:flex-row sm:justify-between"><button onClick={() => { setScreen('setup'); }} className="rounded-xl border border-slate-200 px-4 py-3 text-sm font-bold text-slate-600 hover:bg-slate-50">Tạm dừng</button><button disabled={!revealed} onClick={nextQuestion} className="inline-flex items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-violet-600 to-fuchsia-600 px-5 py-3 font-black text-white shadow-md transition hover:shadow-lg disabled:cursor-not-allowed disabled:opacity-40">{isLastQuestion ? 'Mở kho báu cuối cùng' : 'Tiếp tục khám phá'} <span>→</span></button></div>
+            <div className="mt-5 flex flex-col-reverse gap-3 sm:flex-row sm:justify-between"><button onClick={onBack} className="rounded-xl border border-slate-200 px-4 py-3 text-sm font-bold text-slate-600 hover:bg-slate-50">Tạm dừng</button><button disabled={!revealed} onClick={nextQuestion} className="inline-flex items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-violet-600 to-fuchsia-600 px-5 py-3 font-black text-white shadow-md transition hover:shadow-lg disabled:cursor-not-allowed disabled:opacity-40">{isLastQuestion ? 'Mở kho báu cuối cùng' : 'Tiếp tục khám phá'} <span>→</span></button></div>
           </section>
         </div>
       )}

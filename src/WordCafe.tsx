@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { ArrowLeft, ChefHat, Coffee, Heart, RotateCcw, Sparkles, Star, Trophy, Volume2 } from 'lucide-react';
 
 type CafeTerm = {
@@ -40,7 +40,7 @@ const teams = [
 ];
 
 export default function WordCafe({ activeSet, onBack, onFinish }: WordCafeProps) {
-  const questions = useMemo(() => makeQuestions(activeSet?.terms || []), [activeSet?.id, activeSet?.terms]);
+  const [questions, setQuestions] = useState(() => makeQuestions(activeSet?.terms || []));
   const [screen, setScreen] = useState<'setup' | 'playing' | 'results'>('setup');
   const [playMode, setPlayMode] = useState<'solo' | 'teams'>('solo');
   const [teamCount, setTeamCount] = useState(2);
@@ -57,12 +57,59 @@ export default function WordCafe({ activeSet, onBack, onFinish }: WordCafeProps)
   const [startedAt, setStartedAt] = useState<number | null>(null);
   const [finishedAt, setFinishedAt] = useState<number | null>(null);
 
+  const progressKey = `vocabmaster_word-cafe_progress_${activeSet?.id || 'default'}`;
+  const [pendingProgress, setPendingProgress] = useState<any>(null);
+  const [progressReady, setProgressReady] = useState(false);
+  useEffect(() => {
+    setProgressReady(false);
+    setScreen('setup');
+    setQuestions(makeQuestions(activeSet?.terms || []));
+    try {
+      const data = JSON.parse(localStorage.getItem(progressKey) || 'null');
+      setPendingProgress(data?.screen === 'playing' && Array.isArray(data.questions) && data.questions.length ? data : null);
+    } catch { setPendingProgress(null); localStorage.removeItem(progressKey); }
+    setProgressReady(true);
+  }, [progressKey]);
+  useEffect(() => {
+    if (!progressReady || pendingProgress) return;
+    if (screen === 'playing') {
+      try { localStorage.setItem(progressKey, JSON.stringify({ screen, questions, playMode, teamCount, roundCount, questionIndex, selected, revealed, soloScore, teamScores, teamTurn, streak, bestStreak, startedAt, finishedAt, correctCount })); } catch { /* storage unavailable */ }
+    } else if (screen === 'results') localStorage.removeItem(progressKey);
+  }, [progressReady, pendingProgress, progressKey, screen, questions, playMode, teamCount, roundCount, questionIndex, selected, revealed, soloScore, teamScores, teamTurn, streak, bestStreak, startedAt, finishedAt, correctCount]);
+  const resumeGame = () => {
+    const data = pendingProgress;
+    if (!data) return;
+    setQuestions(data.questions);
+    setPlayMode(data.playMode);
+    setTeamCount(data.teamCount);
+    setRoundCount(data.roundCount);
+    setQuestionIndex(data.questionIndex);
+    setSelected(data.selected);
+    setRevealed(data.revealed);
+    setSoloScore(data.soloScore);
+    setTeamScores(data.teamScores);
+    setTeamTurn(data.teamTurn);
+    setStreak(data.streak);
+    setBestStreak(data.bestStreak);
+    setStartedAt(data.startedAt);
+    setFinishedAt(data.finishedAt);
+    setCorrectCount(data.correctCount);
+    setScreen('playing');
+    setPendingProgress(null);
+  };
+  const restartSavedGame = () => {
+    localStorage.removeItem(progressKey);
+    setPendingProgress(null);
+    setScreen('setup');
+  };
   const rounds = Math.min(Math.max(1, roundCount || 1), questions.length);
   const question = questions[questionIndex];
   const currentTeam = teams[teamTurn % teamCount];
   const isLast = questionIndex + 1 >= rounds;
 
   const startGame = () => {
+    localStorage.removeItem(progressKey);
+    setPendingProgress(null);
     setQuestionIndex(0); setSelected(''); setRevealed(false); setSoloScore(0); setTeamScores([0, 0, 0, 0]);
     setTeamTurn(0); setStreak(0); setBestStreak(0); setCorrectCount(0); setStartedAt(Date.now()); setFinishedAt(null); setScreen('playing');
   };
@@ -98,7 +145,8 @@ export default function WordCafe({ activeSet, onBack, onFinish }: WordCafeProps)
       <div className="relative mx-auto flex h-44 w-full max-w-sm items-center justify-center sm:h-52"><div className="absolute h-36 w-64 rounded-[2rem] border-4 border-white/80 bg-gradient-to-br from-rose-200 via-orange-100 to-violet-200 shadow-inner sm:h-40 sm:w-72"/><div className="absolute left-[14%] top-[10%] text-3xl">☁️</div><div className="absolute right-[15%] top-[10%] text-3xl">✨</div><div className="relative z-10 text-7xl drop-shadow-sm sm:text-8xl">🧑🏻‍🍳</div><div className="absolute bottom-1 right-[15%] animate-bounce text-4xl">🧁</div><div className="absolute bottom-3 left-[13%] text-3xl">🍓</div></div></div>
     </header>
 
-    {screen === 'setup' && <div className="grid gap-5 lg:grid-cols-[1fr_0.8fr]"><section className="rounded-[2rem] border border-pink-100 bg-white p-5 shadow-sm sm:p-7"><div className="flex items-center gap-3"><div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-pink-100 text-2xl">📝</div><div><h2 className="text-xl font-black">Chuẩn bị order</h2><p className="text-sm text-slate-500">Chọn cách chơi và số đơn hàng.</p></div></div>
+    {pendingProgress && <div className="rounded-2xl border border-violet-200 bg-violet-50 p-5 shadow-sm"><h2 className="text-lg font-black text-violet-900">📌 Bạn có bài làm đang dở!</h2><p className="mt-2 text-sm text-violet-800">Em muốn tiếp tục từ câu trước hay làm bài mới?</p><div className="mt-4 flex flex-wrap gap-3"><button onClick={resumeGame} className="rounded-xl bg-violet-600 px-5 py-3 font-bold text-white">▶ Tiếp tục bài đang làm</button><button onClick={restartSavedGame} className="rounded-xl border border-violet-300 bg-white px-5 py-3 font-bold text-violet-700">↻ Làm bài mới</button></div></div>}
+    {screen === 'setup' && !pendingProgress && <div className="grid gap-5 lg:grid-cols-[1fr_0.8fr]"><section className="rounded-[2rem] border border-pink-100 bg-white p-5 shadow-sm sm:p-7"><div className="flex items-center gap-3"><div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-pink-100 text-2xl">📝</div><div><h2 className="text-xl font-black">Chuẩn bị order</h2><p className="text-sm text-slate-500">Chọn cách chơi và số đơn hàng.</p></div></div>
       <div className="mt-5 grid gap-3 sm:grid-cols-2"><button onClick={() => setPlayMode('solo')} className={`rounded-2xl border-2 p-4 text-left transition ${playMode === 'solo' ? 'border-rose-400 bg-rose-50 ring-2 ring-rose-100' : 'border-slate-200 hover:border-rose-200'}`}><div className="text-3xl">🧑‍🍳</div><p className="mt-2 font-black">Tự chơi</p><p className="mt-1 text-sm text-slate-500">Phục vụ khách và tích điểm của bạn.</p></button><button onClick={() => setPlayMode('teams')} className={`rounded-2xl border-2 p-4 text-left transition ${playMode === 'teams' ? 'border-violet-400 bg-violet-50 ring-2 ring-violet-100' : 'border-slate-200 hover:border-violet-200'}`}><div className="text-3xl">👯</div><p className="mt-2 font-black">Thi đua trên lớp</p><p className="mt-1 text-sm text-slate-500">Các đội luân phiên nhận order.</p></button></div>
       {playMode === 'teams' && <div className="mt-5"><label className="mb-2 block text-sm font-bold">Số đội</label><div className="grid grid-cols-3 gap-2">{[2,3,4].map((count) => <button key={count} onClick={() => setTeamCount(count)} className={`rounded-xl border-2 px-3 py-2.5 font-black ${teamCount === count ? 'border-violet-400 bg-violet-50 text-violet-800' : 'border-slate-200'}`}>{count} đội</button>)}</div></div>}
       <div className="mt-5"><label className="mb-2 block text-sm font-bold">Số đơn hàng</label><div className="grid grid-cols-3 gap-2">{[5,10,15].map((count) => <button key={count} disabled={questions.length < count} onClick={() => setRoundCount(count)} className={`rounded-xl border-2 px-3 py-2.5 font-black disabled:cursor-not-allowed disabled:opacity-35 ${roundCount === count ? 'border-rose-400 bg-rose-50 text-rose-800' : 'border-slate-200'}`}>{count} câu</button>)}</div><p className="mt-2 text-xs text-slate-500">Bộ từ có {questions.length} từ. Nếu có ít hơn 5 từ, game sẽ dùng số từ hiện có.</p></div>
@@ -111,7 +159,7 @@ export default function WordCafe({ activeSet, onBack, onFinish }: WordCafeProps)
       <div className="p-4 sm:p-7"><div className="mx-auto max-w-3xl rounded-[1.75rem] border border-amber-100 bg-gradient-to-br from-amber-50 via-white to-pink-50 p-5 text-center sm:p-8"><div className="mx-auto flex h-20 w-20 items-center justify-center rounded-[1.5rem] border-4 border-white bg-white text-5xl shadow-sm">{question.image ? <img src={question.image} alt={question.word} className="h-full w-full rounded-2xl object-cover"/> : '🧾'}</div><p className="mt-4 text-xs font-black uppercase tracking-[0.2em] text-rose-500">A CUSTOMER SAYS…</p><h2 className="mt-2 text-xl font-black leading-relaxed sm:text-2xl">Từ nào phù hợp với order này?</h2><p className="mx-auto mt-3 max-w-xl text-lg font-bold leading-relaxed text-violet-900 sm:text-xl">“{question.meaning}”</p>{question.example && question.example !== question.meaning && <p className="mt-3 text-sm italic text-slate-500">Ví dụ: {question.example}</p>}</div>
       <div className="mt-5 grid grid-cols-2 gap-3">{question.options.map((option,index)=>{const isCorrect=option===question.word;const isSelected=option===selected;let style='border-slate-200 bg-white text-slate-800 hover:border-rose-300 hover:bg-rose-50';if(revealed&&isCorrect)style='border-emerald-300 bg-emerald-50 text-emerald-800 ring-2 ring-emerald-100';else if(revealed&&isSelected)style='border-rose-300 bg-rose-50 text-rose-800';return <button key={`${questionIndex}-${option}`} disabled={revealed} onClick={()=>chooseAnswer(option)} className={`min-h-16 rounded-2xl border-2 p-3 text-left font-extrabold transition sm:min-h-20 sm:p-4 ${style} disabled:cursor-default`}><span className="mb-2 flex h-7 w-7 items-center justify-center rounded-lg bg-black/5 text-xs font-black">{String.fromCharCode(65+index)}</span><span className="break-words text-sm sm:text-base">{option}</span>{revealed&&isCorrect&&<span className="ml-2">✓</span>}</button>})}</div>
       {revealed && <div className={`mt-4 rounded-2xl border p-4 ${selected===question.word?'border-emerald-200 bg-emerald-50':'border-amber-200 bg-amber-50'}`}><div className="flex items-start gap-3"><div className="text-2xl">{selected===question.word?'🎉':'💗'}</div><div className="min-w-0 flex-1"><p className="font-black">{selected===question.word?'Order hoàn thành! Tuyệt vời!':`Gần đúng rồi! Đáp án là “${question.word}”.`}</p><p className="mt-1 text-sm text-slate-600">{selected===question.word?'Bạn nhận điểm thưởng. Vị khách đang rất vui!':'Đừng lo nhé, mình học thêm một từ mới nào.'}</p></div><button onClick={()=>speak(question.word)} title="Nghe phát âm" className="rounded-xl bg-white p-2.5 text-rose-600 shadow-sm"><Volume2 size={19}/></button></div></div>}
-      <div className="mt-5 flex flex-col-reverse gap-3 sm:flex-row sm:justify-between"><button onClick={()=>setScreen('setup')} className="rounded-xl border border-slate-200 px-4 py-3 text-sm font-bold text-slate-600 hover:bg-slate-50">Tạm dừng</button><button disabled={!revealed} onClick={nextQuestion} className="inline-flex items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-rose-400 to-pink-500 px-5 py-3 font-black text-white shadow-md hover:brightness-105 disabled:cursor-not-allowed disabled:opacity-40">{isLast?'Tính tiền & xem kết quả':'Nhận order tiếp theo'} <span>→</span></button></div></div></section>}
+      <div className="mt-5 flex flex-col-reverse gap-3 sm:flex-row sm:justify-between"><button onClick={onBack} className="rounded-xl border border-slate-200 px-4 py-3 text-sm font-bold text-slate-600 hover:bg-slate-50">Tạm dừng</button><button disabled={!revealed} onClick={nextQuestion} className="inline-flex items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-rose-400 to-pink-500 px-5 py-3 font-black text-white shadow-md hover:brightness-105 disabled:cursor-not-allowed disabled:opacity-40">{isLast?'Tính tiền & xem kết quả':'Nhận order tiếp theo'} <span>→</span></button></div></div></section>}
 
     {screen === 'results' && <section className="mx-auto max-w-3xl overflow-hidden rounded-[2rem] border border-pink-100 bg-white shadow-lg"><div className="relative overflow-hidden bg-gradient-to-br from-rose-300 via-pink-300 to-violet-300 px-5 py-8 text-center sm:px-10 sm:py-10"><div className="absolute left-8 top-8 animate-pulse text-3xl">✨</div><div className="absolute right-8 top-12 animate-bounce text-3xl">🍓</div><div className="text-6xl">{playMode==='solo'?'🏆':'🎉'}</div><p className="mt-3 text-xs font-black uppercase tracking-[0.2em] text-rose-900/60">CAFÉ CLOSED FOR TODAY</p><h2 className="mt-2 text-3xl font-black text-rose-950 sm:text-4xl">{playMode==='solo'?'Barista xuất sắc!':'Ca làm việc kết thúc!'}</h2><p className="mt-2 text-rose-950/75">Cảm ơn bạn đã phục vụ các vị khách hôm nay.</p></div><div className="p-5 sm:p-8">{playMode==='solo'?<div className="grid grid-cols-2 gap-3 sm:grid-cols-3"><div className="rounded-2xl bg-amber-50 p-4 text-center"><Star className="mx-auto text-amber-500"/><p className="mt-2 text-2xl font-black">{soloScore}</p><p className="text-xs font-bold text-slate-500">Điểm thưởng</p></div><div className="rounded-2xl bg-emerald-50 p-4 text-center"><Heart className="mx-auto text-emerald-500"/><p className="mt-2 text-2xl font-black">{correctCount}/{rounds}</p><p className="text-xs font-bold text-slate-500">Order đúng</p></div><div className="col-span-2 rounded-2xl bg-violet-50 p-4 text-center sm:col-span-1"><Sparkles className="mx-auto text-violet-500"/><p className="mt-2 text-2xl font-black">{bestStreak}</p><p className="text-xs font-bold text-slate-500">Combo tốt nhất</p></div></div>:<div className="space-y-3">{teams.slice(0,teamCount).map((team,index)=>({...team,score:teamScores[index]})).sort((a,b)=>b.score-a.score).map((team,index)=><div key={team.name} className={`flex items-center gap-3 rounded-2xl border p-4 ${index===0?'border-amber-300 bg-amber-50':'border-slate-200 bg-slate-50'}`}><div className="text-3xl">{index===0?'👑':team.emoji}</div><div className="min-w-0 flex-1"><p className="font-black">{index===0?'🥇 ':`${index+1}. `}{team.name}</p><p className="text-xs text-slate-500">{index===0?'Quán quân của ca hôm nay!':'Cảm ơn đội đã tham gia!'}</p></div><p className="text-xl font-black">{team.score} <span className="text-xs">điểm</span></p></div>)}</div>}<div className="mt-5 rounded-2xl border border-pink-100 bg-pink-50 p-4"><p className="flex items-center gap-2 font-black text-rose-900"><ChefHat size={18}/> Huy hiệu hôm nay</p><div className="mt-3 flex flex-wrap gap-2"><span className="rounded-full bg-white px-3 py-1.5 text-xs font-bold text-rose-800">☕ Barista chăm chỉ</span>{bestStreak>=3&&<span className="rounded-full bg-white px-3 py-1.5 text-xs font-bold text-violet-800">✨ Combo Master</span>}{correctCount>=Math.ceil(rounds*.8)&&<span className="rounded-full bg-white px-3 py-1.5 text-xs font-bold text-emerald-800">🍰 Siêu phục vụ</span>}</div></div><div className="mt-6 flex flex-col gap-3 sm:flex-row">{playMode==='solo'&&onFinish&&<button onClick={()=>onFinish({mode:'word-cafe',score:correctCount*10,total:rounds*10,percentage:rounds?Math.round(correctCount/rounds*100):0,timeSeconds:elapsed})} className="inline-flex flex-1 items-center justify-center gap-2 rounded-xl bg-emerald-600 px-5 py-3 font-black text-white hover:bg-emerald-700"><Trophy size={18}/> Lưu điểm cá nhân</button>}<button onClick={startGame} className="inline-flex flex-1 items-center justify-center gap-2 rounded-xl bg-rose-500 px-5 py-3 font-black text-white hover:bg-rose-600"><RotateCcw size={18}/> Chơi lại</button><button onClick={onBack} className="flex-1 rounded-xl border border-slate-200 px-5 py-3 font-black text-slate-700 hover:bg-slate-50">Quay về bài học</button></div><p className="mt-4 text-center text-xs leading-relaxed text-slate-400">{playMode==='teams'?'Điểm đội được tính trên thiết bị đang chơi, chưa đồng bộ trực tiếp giữa nhiều thiết bị.':`Thời gian: ${elapsed} giây. Kết quả cá nhân gửi qua luồng lưu điểm hiện có.`}</p></div></section>}
   </div>;

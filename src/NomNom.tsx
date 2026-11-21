@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { ArrowLeft, Volume2, RotateCcw, Trophy, Heart, Check, X, BookOpen, Languages, Keyboard, Sparkles, Share2 } from 'lucide-react';
 
 type Term = {
@@ -58,7 +58,58 @@ export default function NomNom({ activeSet, onBack, onFinish }: Props) {
   const [saved, setSaved] = useState(false);
   const [soundEnabled, setSoundEnabled] = useState(true);
 
+  const progressKey = `vocabmaster_nomnom_progress_${activeSet?.id || 'default'}`;
+  const [pendingProgress, setPendingProgress] = useState<any>(null);
+  const [progressReady, setProgressReady] = useState(false);
+  const advanceTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  useEffect(() => {
+    setProgressReady(false);
+    try {
+      const data = JSON.parse(localStorage.getItem(progressKey) || 'null');
+      setPendingProgress(data?.started && !data?.ended && Array.isArray(data.queue) && data.queue.length ? data : null);
+    } catch { setPendingProgress(null); localStorage.removeItem(progressKey); }
+    setProgressReady(true);
+    return () => { if (advanceTimer.current) clearTimeout(advanceTimer.current); };
+  }, [progressKey]);
+  useEffect(() => {
+    if (!progressReady || pendingProgress) return;
+    if (started && !ended && mode) {
+      try { localStorage.setItem(progressKey, JSON.stringify({ mode, queue, index, lives, score, combo, maxCombo, mastered, wrong, input, feedback, selected, started, startedAt, soundEnabled , ended })); } catch { /* storage unavailable */ }
+    } else if (ended) localStorage.removeItem(progressKey);
+  }, [progressReady, pendingProgress, progressKey, ended, mode, queue, index, lives, score, combo, maxCombo, mastered, wrong, input, feedback, selected, started, startedAt, soundEnabled]);
+  const resumeGame = () => {
+    const data = pendingProgress;
+    if (!data) return;
+    setMode(data.mode);
+    setQueue(data.queue);
+    setIndex(data.index);
+    setLives(data.lives);
+    setScore(data.score);
+    setCombo(data.combo);
+    setMaxCombo(data.maxCombo);
+    setMastered(data.mastered);
+    setWrong(data.wrong);
+    setInput(data.input);
+    setFeedback(data.feedback);
+    setSelected(data.selected);
+    setStarted(data.started);
+    setStartedAt(data.startedAt);
+    setSoundEnabled(data.soundEnabled);
+    setEnded(false);
+    // Feedback is cleared on resume so that no pending timer can skip a question.
+    if (data.feedback) { setFeedback(''); setSelected(''); setInput(''); if (data.index + 1 >= data.queue.length || data.lives <= 0) setEnded(true); else setIndex(data.index + 1); }
+    setPendingProgress(null);
+  };
+  const restartSavedGame = () => {
+    localStorage.removeItem(progressKey);
+    setPendingProgress(null);
+    setStarted(false);
+    setMode(null);
+    setQueue([]);
+  };
   const startGame = (selectedMode: PlayMode, retryWrong = false) => {
+    localStorage.removeItem(progressKey);
+    setPendingProgress(null);
     const pool = retryWrong ? terms.filter(t => wrong.includes(t.term)) : shuffle(terms);
     setMode(selectedMode);
     setQueue(pool);
@@ -166,7 +217,7 @@ export default function NomNom({ activeSet, onBack, onFinish }: Props) {
       setWrong(prev => prev.includes(current.term) ? prev : [...prev, current.term]);
     }
 
-    window.setTimeout(() => {
+    advanceTimer.current = window.setTimeout(() => {
       const nextLives = lives - (correct ? 0 : 1);
       const nextIndex = index + 1;
       setFeedback('');
@@ -197,6 +248,8 @@ export default function NomNom({ activeSet, onBack, onFinish }: Props) {
   if (!terms.length) {
     return <div className="mx-auto max-w-xl rounded-3xl border border-slate-200 bg-white p-8 text-center shadow-sm"><div className="mb-3 text-5xl">👾</div><h2 className="text-xl font-extrabold text-slate-800">Bộ từ vựng chưa có từ nào</h2><p className="mt-2 text-slate-500">Hãy thêm từ và nghĩa trước khi chơi Nom Nom nhé.</p><button onClick={onBack} className="mt-5 rounded-xl bg-violet-600 px-5 py-3 font-bold text-white">Quay lại menu</button></div>;
   }
+
+  if (pendingProgress) return <div className="mx-auto max-w-xl rounded-3xl border border-violet-200 bg-violet-50 p-7"><h2 className="text-xl font-black">📌 Bạn có bài làm đang dở!</h2><p className="mt-2 text-slate-600">Em muốn tiếp tục Nom Nom từ câu trước không?</p><div className="mt-5 flex flex-wrap gap-3"><button onClick={resumeGame} className="rounded-xl bg-violet-600 px-5 py-3 font-bold text-white">▶ Tiếp tục bài đang làm</button><button onClick={restartSavedGame} className="rounded-xl border bg-white px-5 py-3 font-bold">↻ Làm bài mới</button></div></div>;
 
   if (!started || !mode) {
     return (

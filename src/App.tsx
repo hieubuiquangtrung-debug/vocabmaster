@@ -38,6 +38,9 @@ import TreasureHunt from './TreasureHunt';
 import WordCafe from './WordCafe';
 import NomNom from './NomNom';
 import GrammarPractice from './GrammarPractice';
+import ArcadeStudentHome from './ArcadeStudentHome';
+import { awardPracticeXP } from './ArcadeRewards';
+import { ArcadeMiniGames } from './ArcadeMiniGames';
 import { initializeApp } from 'firebase/app';
 import { 
   getAuth,
@@ -702,7 +705,54 @@ if (!code || !name || !className || rosterStages.length === 0) {
   const [activeStudyMode, setActiveStudyMode] = useState('menu'); // 'menu', 'flashcards', 'quiz', 'matching', 'spelling', 'completed'
   const [showStudentProgress, setShowStudentProgress] = useState(false);
   const [latestScoreData, setLatestScoreData] = useState(null);
+  const [resumePrompt, setResumePrompt] = useState<{
+  mode: string;
+  progress: number;
+  total: number;
+} | null>(null);
+  const saveVocabularyProgress = (
+  mode: string,
+  progress: number,
+  total: number,
+  data: Record<string, unknown>
+) => {
+  if (!studentCode) return;
 
+  const progressData = {
+    mode,
+    progress,
+    total,
+    data,
+    updatedAt: Date.now(),
+  };
+
+  localStorage.setItem(
+    `vocabmaster_progress_${studentCode}`,
+    JSON.stringify(progressData)
+  );
+};
+const getVocabularyProgress = () => {
+  if (!studentCode) return null;
+
+  try {
+    const saved = localStorage.getItem(
+      `vocabmaster_progress_${studentCode}`
+    );
+
+    if (!saved) return null;
+
+    return JSON.parse(saved);
+  } catch {
+    return null;
+  }
+};
+const clearVocabularyProgress = () => {
+  if (!studentCode) return;
+
+  localStorage.removeItem(
+    `vocabmaster_progress_${studentCode}`
+  );
+};
   // Form State for creating/editing sets
   const [isCreatingSet, setIsCreatingSet] = useState(false);
   const [editingSetId, setEditingSetId] = useState(null);
@@ -1287,7 +1337,7 @@ const setPayload = {
   localStorage.setItem('vocab_student_code', studentCode);
   localStorage.setItem('vocab_student_name', studentName);
   localStorage.setItem('vocab_student_class', studentClass);
-
+  if (activeSet) awardPracticeXP(studentCode, activeSet.id, String(scoreData.mode || 'practice'), Number(scoreData.score || 0), Number(scoreData.total || 0));
   setLatestScoreData(scoreData);
   setActiveStudyMode('completed');
 
@@ -1471,6 +1521,8 @@ const setPayload = {
   />
 ) : mode === 'teacher' ? (
           /* ================= TEACHER MODE ================= */
+<>
+
 <TeacherDashboard
   db={db}
   appId={appId}
@@ -1540,6 +1592,7 @@ setRosterStages={setRosterStages}
   handleRosterFileChange={handleRosterFileChange}
   handleImportRosterStudents={handleImportRosterStudents}
 />
+</>
         ) : (
           /* ================= STUDENT MODE ================= */
           <StudentArea
@@ -4020,78 +4073,17 @@ const isCorrect = correctAnswer
       </section>
     )}
 
-    {/* STUDENT HOME — PROFILE & SET SELECTOR */}
-    <div className="relative overflow-hidden rounded-[2rem] border border-violet-100 bg-white shadow-lg shadow-violet-100/50">
-  {/* Welcome banner — VocabMaster Universe */}
-  <div className="relative overflow-hidden bg-gradient-to-br from-[#20165f] via-[#33217f] to-[#5a38c7] px-6 py-8 text-white shadow-xl shadow-indigo-200/50 sm:px-10 sm:py-10">
-    <style>{`
-      @keyframes vmOrbit { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
-      @keyframes vmCounterOrbit { from { transform: rotate(360deg); } to { transform: rotate(0deg); } }
-      @keyframes vmFloat { 0%,100% { transform: translateY(0) rotate(-5deg); } 50% { transform: translateY(-12px) rotate(5deg); } }
-      @keyframes vmTwinkle { 0%,100% { opacity:.35; transform:scale(.8); } 50% { opacity:1; transform:scale(1.25); } }
-      .vm-orbit { animation:vmOrbit 16s linear infinite; transform-origin:center; }
-      .vm-counter { animation:vmCounterOrbit 10s linear infinite; transform-origin:center; }
-      .vm-float { animation:vmFloat 5s ease-in-out infinite; }
-      .vm-float-slow { animation:vmFloat 7s ease-in-out infinite; }
-      .vm-twinkle { animation:vmTwinkle 2.2s ease-in-out infinite; }
-    `}</style>
+    {/* STUDENT HOME — ARCADE PHASE 1. Verification and navigation logic remain in App.tsx. */}
+    <ArcadeStudentHome
 
-    <div className="pointer-events-none absolute inset-0 overflow-hidden">
-      <div className="absolute -left-20 -top-24 h-64 w-64 rounded-full bg-indigo-300/10 blur-2xl" />
-      <div className="absolute right-[-5rem] top-[-4rem] h-72 w-72 rounded-full bg-fuchsia-300/10 blur-3xl" />
-      <span className="vm-twinkle absolute left-[38%] top-[15%] text-2xl text-yellow-300">✦</span>
-      <span className="vm-twinkle absolute left-[48%] bottom-[20%] text-xl text-white/80">✧</span>
-      <span className="vm-twinkle absolute right-[23%] top-[17%] text-3xl text-yellow-300">✦</span>
-      <span className="vm-twinkle absolute right-[35%] bottom-[13%] text-2xl text-pink-200">✦</span>
-
-      <div className="vm-float absolute -right-2 bottom-[-1.5rem] hidden h-56 w-56 sm:block">
-        <div className="absolute inset-[22%] rounded-full bg-[radial-gradient(circle_at_32%_28%,#fff9c7_0%,#d6d09a_22%,#a9a16f_55%,#625a4d_100%)] shadow-[0_20px_40px_rgba(0,0,0,.35)]" />
-        <div className="vm-orbit absolute inset-0">
-          <div className="absolute left-0 top-[47%] h-9 w-full -rotate-[20deg] rounded-[100%] border-[7px] border-[#d7c27c]/80 shadow-[0_0_0_3px_rgba(60,40,120,.18)]" />
-        </div>
-        <div className="vm-counter absolute inset-[-10%]">
-          <div className="absolute left-[12%] top-[49%] h-7 w-[90%] rotate-[18deg] rounded-[100%] border-[3px] border-[#f6e7a7]/60" />
-        </div>
-      </div>
-      <div className="vm-float-slow absolute right-[18%] top-6 hidden text-6xl drop-shadow-lg sm:block">🌙</div>
-    </div>
-
-    <div className="relative z-10 max-w-3xl">
-      <div className="inline-flex items-center gap-2 rounded-full border border-white/20 bg-white/10 px-4 py-2 text-xs font-black tracking-[0.2em] backdrop-blur-sm">
-        <span className="h-2.5 w-2.5 rounded-full bg-yellow-300" />
-        VOCABMASTER UNIVERSE
-      </div>
-      <p className="mt-7 text-sm font-extrabold uppercase tracking-wide text-indigo-200">READY TO EXPLORE?</p>
-      <h2 className="mt-2 max-w-3xl text-4xl font-black leading-[0.95] tracking-tight sm:text-6xl">
-        Học tiếng Anh
-        <span className="block text-yellow-300">theo cách thú vị hơn.</span>
-      </h2>
-      <p className="mt-7 max-w-2xl text-base leading-relaxed text-white/90 sm:text-lg">
-        Xin chào, <span className="font-black text-white">{isStudentVerified ? studentName : 'bạn nhỏ'}!</span>{' '}
-        Khám phá từ vựng, luyện ngữ pháp và chinh phục những thử thách mới.
-      </p>
-      <div className="mt-8 flex flex-wrap gap-3">
-        <div className="rounded-2xl border border-white/15 bg-white/10 px-5 py-3 backdrop-blur-sm">
-          <p className="text-[10px] font-black uppercase tracking-wider text-indigo-200">Học sinh</p>
-          <p className="mt-1 font-black">{isStudentVerified ? studentName : 'Chưa xác nhận'}</p>
-        </div>
-        <div className="rounded-2xl border border-white/15 bg-white/10 px-5 py-3 backdrop-blur-sm">
-          <p className="text-[10px] font-black uppercase tracking-wider text-indigo-200">Lớp</p>
-          <p className="mt-1 font-black">{isStudentVerified ? studentClass : '—'}</p>
-        </div>
-        <div className="rounded-2xl border border-white/15 bg-white/10 px-5 py-3 backdrop-blur-sm">
-          <p className="text-[10px] font-black uppercase tracking-wider text-indigo-200">Trạng thái</p>
-          <p className="mt-1 font-black text-emerald-300">✓ Sẵn sàng học</p>
-        </div>
-      </div>
-    </div>
-  </div>
-
-
-  {/* Student information and lesson selection */}
-  <div className="grid grid-cols-1 gap-5 p-5 sm:p-7 lg:grid-cols-2">
-
-    {/* Student verification card */}
+      studentName={studentName}
+      studentClass={studentClass}
+      isStudentVerified={isStudentVerified}
+      onVocabulary={() => { if (!isStudentVerified) { alert('Vui lòng xác nhận mã học sinh trước.'); return; } setActiveStudyMode('vocabulary-menu'); }}
+      onGrammar={() => { if (!isStudentVerified) { alert('Vui lòng xác nhận mã học sinh trước.'); return; } setActiveStudyMode('grammar-practice'); }}
+      verification={
+        <div className="grid grid-cols-1 gap-5 sm:p-2 lg:grid-cols-2">
+{/* Student verification card */}
     <div className="rounded-2xl border border-sky-100 bg-sky-50/70 p-5">
       <div className="mb-4 flex items-center gap-3">
         <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-sky-100 text-sky-700">
@@ -4161,58 +4153,9 @@ const isCorrect = correctAnswer
         </div>
       )}
     </div>
-
-    {/* Bộ từ vựng được chọn bên trong Vocabulary Practice, không hiển thị ở trang chủ. */}
-
-  </div>
-    </div>
-    {/* TWO CORE LEARNING AREAS: VOCABULARY + GRAMMAR */}
-    <section className="grid grid-cols-1 gap-5 lg:grid-cols-2">
-      <article className="relative min-h-[285px] overflow-hidden rounded-[2rem] border border-violet-200 bg-gradient-to-br from-violet-50 via-white to-fuchsia-50 p-6 shadow-lg shadow-violet-100/60 sm:p-8">
-        <div className="pointer-events-none absolute right-[-1rem] top-[-1rem] opacity-90">
-          <div className="vm-float-slow relative text-[8rem] leading-none drop-shadow-2xl">📚</div>
-          <span className="vm-twinkle absolute left-1 top-24 text-3xl text-yellow-400">✦</span>
-          <span className="vm-twinkle absolute right-10 bottom-2 text-2xl text-pink-400">✦</span>
         </div>
-        <div className="relative z-10 max-w-[72%]">
-          <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-violet-600 text-3xl shadow-lg shadow-violet-200">📚</div>
-          <p className="mt-6 text-xs font-black uppercase tracking-[0.2em] text-violet-600">EXPLORE WORDS</p>
-          <h3 className="mt-2 text-3xl font-black leading-tight text-violet-950">Vocabulary<br />Practice</h3>
-          <p className="mt-4 text-sm leading-relaxed text-slate-600">Học từ mới thông qua flashcards, quiz, matching, spelling, NomNom và những hoạt động tương tác thú vị.</p>
-        </div>
-        <div className="relative z-10 mt-5 flex flex-wrap gap-2">
-          {['Flashcards','Quiz','Matching','Spelling','NomNom'].map((item) => (
-            <span key={item} className="rounded-full border border-violet-200 bg-white/80 px-3 py-1 text-xs font-bold text-violet-700">{item}</span>
-          ))}
-        </div>
-        <button type="button" onClick={() => { if (!isStudentVerified) { alert('Vui lòng xác nhận mã học sinh trước.'); return; } setActiveStudyMode('vocabulary-menu'); }} className="relative z-10 mt-5 flex w-full items-center justify-center gap-2 rounded-2xl bg-gradient-to-r from-violet-600 to-purple-600 px-4 py-4 font-black text-white shadow-lg shadow-violet-300/50 transition hover:-translate-y-0.5 hover:shadow-xl">
-          Khám phá Vocabulary <ArrowRight className="h-5 w-5" />
-        </button>
-      </article>
-
-      <article className="relative min-h-[285px] overflow-hidden rounded-[2rem] border border-sky-200 bg-gradient-to-br from-sky-50 via-white to-indigo-50 p-6 shadow-lg shadow-blue-100/60 sm:p-8">
-        <div className="pointer-events-none absolute right-[-1rem] top-[-1rem] opacity-90">
-          <div className="vm-float relative text-[8rem] leading-none drop-shadow-2xl">✏️</div>
-          <span className="vm-twinkle absolute left-1 top-24 text-3xl text-yellow-400">✦</span>
-          <span className="vm-twinkle absolute right-10 bottom-2 text-2xl text-sky-400">✦</span>
-        </div>
-        <div className="relative z-10 max-w-[72%]">
-          <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-blue-600 text-3xl shadow-lg shadow-blue-200">✏️</div>
-          <p className="mt-6 text-xs font-black uppercase tracking-[0.2em] text-blue-600">MASTER GRAMMAR</p>
-          <h3 className="mt-2 text-3xl font-black leading-tight text-blue-950">Grammar<br />Practice</h3>
-          <p className="mt-4 text-sm leading-relaxed text-slate-600">Ôn Language Recap, luyện các cấu trúc ngữ pháp và hoàn thành những bài tập được giáo viên giao.</p>
-        </div>
-        <div className="relative z-10 mt-5 flex flex-wrap gap-2">
-          {['Language Recap','Practice','Tests','Results'].map((item) => (
-            <span key={item} className="rounded-full border border-blue-200 bg-white/80 px-3 py-1 text-xs font-bold text-blue-700">{item}</span>
-          ))}
-        </div>
-        <button type="button" onClick={() => { if (!isStudentVerified) { alert('Vui lòng xác nhận mã học sinh trước.'); return; } setActiveStudyMode('grammar-practice'); }} className="relative z-10 mt-5 flex w-full items-center justify-center gap-2 rounded-2xl bg-gradient-to-r from-blue-600 to-indigo-600 px-4 py-4 font-black text-white shadow-lg shadow-blue-300/50 transition hover:-translate-y-0.5 hover:shadow-xl">
-          Khám phá Grammar <ArrowRight className="h-5 w-5" />
-        </button>
-      </article>
-    </section>
-
+      }
+    />
   </>
 ) : (
   /* COMPACT HEADER — WHEN STUDYING */
@@ -4393,6 +4336,7 @@ const isCorrect = correctAnswer
   {/* Learning mode cards */}
   <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
 
+
     {/* Flashcards */}
     <StudyCard
       title="Thẻ Ghi Nhớ"
@@ -4453,45 +4397,12 @@ const isCorrect = correctAnswer
       }}
     />
 
-<StudyCard
-      title="Treasure Hunt — Săn Kho Báu"
-      desc="Khám phá đảo bí ẩn, trả lời câu hỏi từ vựng và thu thập kho báu."
-      icon={<span className="text-3xl">🗺️</span>}
-      color="border-amber-200 bg-gradient-to-br from-amber-50 via-white to-violet-50 hover:border-amber-400"
-      onClick={() => {
-        if (!isStudentVerified) {
-          alert('Vui lòng nhập và xác nhận mã học sinh trước.');
-          return;
-        }
-        setActiveStudyMode('treasure-hunt');
-      }}
-    />
-
-<StudyCard
-      title="Word Café — Quán cà phê từ vựng"
-      desc="Nhận order, luyện từ vựng và phục vụ những vị khách đáng yêu."
-      icon={<span className="text-3xl">☕</span>}
-      color="border-pink-200 bg-gradient-to-br from-pink-50 via-white to-violet-50 hover:border-pink-400"
-      onClick={() => {
-        if (!isStudentVerified) {
-          alert('Vui lòng nhập và xác nhận mã học sinh trước.');
-          return;
-        }
-        setActiveStudyMode('word-cafe');
-      }}
-    />
     <StudyCard
-      title="Nom Nom – Quái vật háu ăn"
-      desc="Chọn từ đúng, luyện nghĩa và chính tả cùng Nom!"
-      icon={<span className="text-4xl">👾</span>}
-      color="border-indigo-200 bg-gradient-to-br from-indigo-50 to-white hover:border-indigo-400"
-      onClick={() => {
-        if (!isStudentVerified) {
-          alert('Vui lòng nhập và xác nhận mã học sinh trước.');
-          return;
-        }
-        setActiveStudyMode('nomnom');
-      }}
+      title="Arcade Mini-games"
+      desc="Treasure Hunt, Word Café, NomNom, Word Builder, Word Fishing, Memory Flip và Sentence Runner."
+      icon={<span className="text-3xl">🎲</span>}
+      color="border-fuchsia-200 bg-gradient-to-br from-fuchsia-50 to-white hover:border-fuchsia-400"
+      onClick={() => { if (!isStudentVerified) { alert('Vui lòng xác nhận mã học sinh trước.'); return; } setActiveStudyMode('arcade-mini-games'); }}
     />
   </div>
 
@@ -4521,30 +4432,32 @@ const isCorrect = correctAnswer
 
 </div>
 
+      ) : activeStudyMode === 'arcade-mini-games' ? (
+        <ArcadeMiniGames key={activeSet.id} activeSet={activeSet} studentCode={studentCode} onBack={() => setActiveStudyMode('vocabulary-menu')} onFinish={handleSaveScore} onOpenLegacy={(mode) => setActiveStudyMode(mode)} />
       ) : activeStudyMode === 'flashcards' ? (
-        <FlashcardMode activeSet={activeSet} onBack={() => setActiveStudyMode('menu')} />
+        <FlashcardMode activeSet={activeSet} onBack={() => setActiveStudyMode('vocabulary-menu')} />
       ) : activeStudyMode === 'quiz' ? (
-        <QuizMode activeSet={activeSet} onFinish={handleSaveScore} onBack={() => setActiveStudyMode('menu')} />
+        <QuizMode activeSet={activeSet} onFinish={handleSaveScore} onBack={() => setActiveStudyMode('vocabulary-menu')} />
       ) : activeStudyMode === 'matching' ? (
-        <MatchingMode activeSet={activeSet} onFinish={handleSaveScore} onBack={() => setActiveStudyMode('menu')} />
+        <MatchingMode activeSet={activeSet} onFinish={handleSaveScore} onBack={() => setActiveStudyMode('vocabulary-menu')} />
       ) : activeStudyMode === 'spelling' ? (
-        <SpellingMode activeSet={activeSet} onFinish={handleSaveScore} onBack={() => setActiveStudyMode('menu')} />
+        <SpellingMode activeSet={activeSet} onFinish={handleSaveScore} onBack={() => setActiveStudyMode('vocabulary-menu')} />
       ) : activeStudyMode === 'treasure-hunt' ? (
         <TreasureHunt
           activeSet={activeSet}
-          onBack={() => setActiveStudyMode('menu')}
+          onBack={() => setActiveStudyMode('vocabulary-menu')}
           onFinish={handleSaveScore}
         />
       ) : activeStudyMode === 'word-cafe' ? (
   <WordCafe
     activeSet={activeSet}
-    onBack={() => setActiveStudyMode('menu')}
+    onBack={() => setActiveStudyMode('vocabulary-menu')}
     onFinish={handleSaveScore}
   />
 ) : activeStudyMode === 'nomnom' ? (
   <NomNom
     activeSet={activeSet}
-    onBack={() => setActiveStudyMode('menu')}
+    onBack={() => setActiveStudyMode('vocabulary-menu')}
     onFinish={handleSaveScore}
   />
       ) : activeStudyMode === 'assigned-test' ? (
@@ -5102,35 +5015,17 @@ const dailyChartData = Object.values(
 }
 
 function StudyCard({ title, desc, icon, color, onClick }) {
-  const visuals = {
-    'Thẻ Ghi Nhớ': '📖',
-    'Trắc Nghiệm Nhanh': '🧠',
-    'Trò Chơi Nối Từ': '🧩',
-    'Luyện Gõ Chính Tả': '✍️',
-    'Treasure Hunt — Săn Kho Báu': '🏝️',
-    'Word Café — Quán cà phê từ vựng': '☕',
-  };
-  const visual = visuals[title] || '✨';
-
   return (
-    <div
+    <div 
       onClick={onClick}
-      className={`relative min-h-[150px] overflow-hidden rounded-[1.75rem] border-2 p-6 shadow-sm transition-all duration-300 hover:-translate-y-1 hover:shadow-xl cursor-pointer group ${color}`}
+      className={`p-6 rounded-2xl border-2 shadow-sm hover:shadow-md transition cursor-pointer flex items-start gap-4 group ${color}`}
     >
-      <div className="pointer-events-none absolute -right-2 -bottom-4 text-[5.5rem] opacity-20 transition duration-500 group-hover:scale-110 group-hover:rotate-6">
-        {visual}
+      <div className="p-3 bg-slate-50 rounded-2xl group-hover:scale-110 transition-transform">
+        {icon}
       </div>
-      <div className="relative z-10 flex items-start gap-4">
-        <div className="rounded-2xl bg-white/80 p-3 shadow-sm transition-transform duration-300 group-hover:scale-110 group-hover:-rotate-6">
-          {icon}
-        </div>
-        <div className="min-w-0 max-w-[82%]">
-          <h3 className="text-lg font-black text-slate-800 transition group-hover:text-indigo-600">{title}</h3>
-          <p className="mt-1 text-xs leading-relaxed text-slate-500 sm:text-sm">{desc}</p>
-          <span className="mt-4 inline-flex items-center gap-1 text-xs font-black text-slate-500 transition group-hover:translate-x-1">
-            Bắt đầu <span>→</span>
-          </span>
-        </div>
+      <div>
+        <h3 className="font-bold text-slate-800 text-lg group-hover:text-indigo-600 transition">{title}</h3>
+        <p className="text-slate-500 text-xs sm:text-sm mt-1">{desc}</p>
       </div>
     </div>
   );
@@ -5153,6 +5048,32 @@ function FlashcardMode({ activeSet, onBack }) {
   const [index, setIndex] = useState(0);
   const [isFlipped, setIsFlipped] = useState(false);
 
+  const progressKey = `vocabmaster_flashcards_progress_${activeSet.id}`;
+  const [pendingProgress, setPendingProgress] = useState(null);
+  const [progressReady, setProgressReady] = useState(false);
+  useEffect(() => {
+    setProgressReady(false);
+    try {
+      const data = JSON.parse(localStorage.getItem(progressKey) || 'null');
+      setPendingProgress(data && data.version === 1 ? data : null);
+    } catch { setPendingProgress(null); localStorage.removeItem(progressKey); }
+    setProgressReady(true);
+  }, [progressKey]);
+  useEffect(() => {
+    if (!progressReady || pendingProgress) return;
+    try { localStorage.setItem(progressKey, JSON.stringify({version: 1, index, isFlipped})); } catch { /* storage unavailable */ }
+  }, [progressReady, pendingProgress, progressKey, index, isFlipped]);
+  const resumeSavedProgress = () => {
+    const data = pendingProgress;
+    if (!data) return;
+    setIndex(data.index);
+    setIsFlipped(data.isFlipped);
+    setPendingProgress(null);
+  };
+  const restartSavedProgress = () => {
+    localStorage.removeItem(progressKey);
+    setPendingProgress(null);
+  };
   const terms = activeSet.terms || [];
   const current = terms[index];
 
@@ -5167,6 +5088,8 @@ function FlashcardMode({ activeSet, onBack }) {
   };
 
   if (terms.length === 0) return null;
+
+  if (pendingProgress) return <div className="mx-auto max-w-xl rounded-3xl border border-violet-200 bg-violet-50 p-7"><h2 className="text-xl font-black text-violet-900">📌 Bạn có bài làm đang dở!</h2><p className="mt-2 text-slate-600">Em muốn tiếp tục từ phần trước không?</p><div className="mt-5 flex flex-wrap gap-3"><button onClick={resumeSavedProgress} className="rounded-xl bg-violet-600 px-5 py-3 font-bold text-white">▶ Tiếp tục bài đang làm</button><button onClick={restartSavedProgress} className="rounded-xl border bg-white px-5 py-3 font-bold text-violet-700">↻ Làm bài mới</button></div></div>;
 
   return (
     <div className="max-w-2xl mx-auto px-4 py-5 space-y-6">
@@ -5272,7 +5195,8 @@ function QuizMode({ activeSet, onFinish, onBack }) {
   // 'meaning' = English → Vietnamese
   // 'term' = Vietnamese → English
   const [quizType, setQuizType] = useState(null);
-
+  const [savedProgress, setSavedProgress] = useState(null);
+  const [showResumePrompt, setShowResumePrompt] = useState(false);
   const [questionQueue, setQuestionQueue] = useState(() => [...terms]);
   const [retryQueue, setRetryQueue] = useState([]);
   const [currentIndex, setCurrentIndex] = useState(0);
@@ -5281,13 +5205,18 @@ function QuizMode({ activeSet, onFinish, onBack }) {
   const [selectedOption, setSelectedOption] = useState(null);
   const [isAnswered, setIsAnswered] = useState(false);
   const [options, setOptions] = useState([]);
-  const [startTime] = useState(Date.now());
+  const [startTime, setStartTime] = useState(Date.now());
+
+  const quizAutoNextTimer = useRef(null);
+  useEffect(() => () => clearTimeout(quizAutoNextTimer.current), []);
 
   const currentTerm = questionQueue[currentIndex];
+  const progressKey = `vocabmaster_quiz_progress_${activeSet.id}`;
 
   // Tạo 4 đáp án theo kiểu Quiz đã chọn
   useEffect(() => {
-    if (!currentTerm || !quizType) return;
+    // Khi khôi phục câu đã trả lời, giữ nguyên đáp án và lựa chọn đã lưu.
+    if (!currentTerm || !quizType || isAnswered) return;
 
     let correctAnswer = '';
     let distractors = [];
@@ -5322,9 +5251,73 @@ function QuizMode({ activeSet, onFinish, onBack }) {
 
     setSelectedOption(null);
     setIsAnswered(false);
-  }, [currentIndex, questionQueue, activeSet, quizType]);
+  }, [currentIndex, questionQueue, activeSet, quizType, isAnswered]);
 
+  // Đọc tiến độ đã lưu khi mở Quiz.
+  useEffect(() => {
+    const saved = localStorage.getItem(progressKey);
+    if (!saved) return;
+
+    try {
+      const progress = JSON.parse(saved);
+      if (
+        progress.quizType &&
+        Array.isArray(progress.questionQueue) &&
+        progress.questionQueue.length > 0 &&
+        progress.currentIndex >= 0 &&
+        progress.currentIndex < progress.questionQueue.length
+      ) {
+        setSavedProgress(progress);
+        setShowResumePrompt(true);
+      } else {
+        localStorage.removeItem(progressKey);
+      }
+    } catch (error) {
+      console.error('Cannot load saved progress:', error);
+      localStorage.removeItem(progressKey);
+    }
+  }, [progressKey]);
+
+  // Lưu đầy đủ trạng thái để học sinh có thể tiếp tục đúng câu đang làm.
+  useEffect(() => {
+    if (!quizType || !currentTerm || showResumePrompt) return;
+
+    const progress = {
+      quizType,
+      questionQueue,
+      retryQueue,
+      currentIndex,
+      firstTryScore,
+      attemptedIds,
+      selectedOption,
+      isAnswered,
+      options,
+      startTime,
+      timestamp: Date.now(),
+    };
+
+    localStorage.setItem(progressKey, JSON.stringify(progress));
+  }, [
+    quizType,
+    questionQueue,
+    retryQueue,
+    currentIndex,
+    firstTryScore,
+    attemptedIds,
+    selectedOption,
+    isAnswered,
+    options,
+    startTime,
+    currentTerm,
+    showResumePrompt,
+    progressKey,
+  ]);
   const handleStartQuiz = (type) => {
+    clearTimeout(quizAutoNextTimer.current);
+    localStorage.removeItem(progressKey);
+    setSavedProgress(null);
+    setShowResumePrompt(false);
+
     setQuizType(type);
 
     // Reset Quiz
@@ -5335,65 +5328,166 @@ function QuizMode({ activeSet, onFinish, onBack }) {
     setAttemptedIds([]);
     setSelectedOption(null);
     setIsAnswered(false);
+    setOptions([]);
+    setStartTime(Date.now());
   };
+const handleSelectOption = (opt) => {
+  if (isAnswered || !currentTerm || !quizType) return;
 
-  const handleSelectOption = (opt) => {
-    if (isAnswered || !currentTerm || !quizType) return;
+  setSelectedOption(opt);
+  setIsAnswered(true);
 
-    setSelectedOption(opt);
-    setIsAnswered(true);
+  const correctAnswer =
+    quizType === 'meaning'
+      ? currentTerm.meaning
+      : currentTerm.term;
 
-    const correctAnswer =
-      quizType === 'meaning'
-        ? currentTerm.meaning
-        : currentTerm.term;
+  const isCorrect = opt === correctAnswer;
+  const hasAttempted = attemptedIds.includes(currentTerm.id);
 
-    const isCorrect = opt === correctAnswer;
-    const hasAttempted = attemptedIds.includes(currentTerm.id);
+  if (!hasAttempted) {
+    setAttemptedIds((prev) => [...prev, currentTerm.id]);
 
-    if (!hasAttempted) {
-      setAttemptedIds((prev) => [...prev, currentTerm.id]);
-
-      if (isCorrect) {
-        setFirstTryScore((prev) => prev + 1);
-      }
+    if (isCorrect) {
+      setFirstTryScore((prev) => prev + 1);
     }
+  }
 
-    playAudioFeedback(isCorrect ? 'correct' : 'incorrect');
+  playAudioFeedback(isCorrect ? 'correct' : 'incorrect');
 
-    const nextRetryQueue = isCorrect
-      ? [...retryQueue]
-      : [...retryQueue, currentTerm];
+  // Nếu sai thì lưu từ này để luyện lại sau
+  if (!isCorrect) {
+    setRetryQueue((prev) => [...prev, currentTerm]);
+  }
 
-    setTimeout(() => {
-      if (currentIndex + 1 < questionQueue.length) {
-        setRetryQueue(nextRetryQueue);
-        setCurrentIndex((prev) => prev + 1);
-        return;
-      }
+  // Đúng: tự chuyển sau khi hiển thị phản hồi ngắn. Sai: đợi học sinh bấm Next.
+  if (isCorrect) {
+    clearTimeout(quizAutoNextTimer.current);
+    quizAutoNextTimer.current = setTimeout(() => {
+      advanceQuizQuestion();
+    }, 1100);
+  }
+};
 
-      if (nextRetryQueue.length > 0) {
-        setQuestionQueue(nextRetryQueue);
-        setRetryQueue([]);
-        setCurrentIndex(0);
-        return;
-      }
 
-      const finalScore =
-        firstTryScore + (isCorrect && !hasAttempted ? 1 : 0);
+const advanceQuizQuestion = () => {
+  if (!currentTerm || !quizType) return;
+  clearTimeout(quizAutoNextTimer.current);
 
-      onFinish({
-        mode: 'quiz',
-        quizType,
-        score: finalScore,
-        total: terms.length,
-        timeSeconds: Math.round(
-          (Date.now() - startTime) / 1000
-        ),
-      });
-    }, 1000);
-  };
+  // Còn câu trong lượt hiện tại: chuyển sang câu tiếp theo.
+  if (currentIndex + 1 < questionQueue.length) {
+    setSelectedOption(null);
+    setIsAnswered(false);
+    setCurrentIndex((prev) => prev + 1);
+    return;
+  }
 
+  // Hết lượt: đưa các câu trả lời sai vào một lượt luyện lại.
+  if (retryQueue.length > 0) {
+    setQuestionQueue([...retryQueue]);
+    setRetryQueue([]);
+    setCurrentIndex(0);
+    setSelectedOption(null);
+    setIsAnswered(false);
+    setOptions([]);
+    return;
+  }
+
+  // Chỉ tính điểm đúng ngay lần đầu; câu làm lại không cộng điểm lần nữa.
+  const finalScore = firstTryScore;
+
+  localStorage.removeItem(progressKey);
+
+  onFinish({
+    mode: 'quiz',
+    quizType,
+    score: finalScore,
+    total: terms.length,
+    timeSeconds: Math.round(
+      (Date.now() - startTime) / 1000
+    ),
+  });
+};
+const handleNextQuestion = () => {
+  if (!isAnswered) return;
+  advanceQuizQuestion();
+};
+
+// =========================================================
+// RESUME BÀI ĐANG LÀM
+// =========================================================
+if (showResumePrompt && savedProgress) {
+  return (
+    <div className="max-w-2xl mx-auto px-4 py-8">
+      <div className="rounded-[2rem] border-2 border-violet-100 bg-white p-8 text-center shadow-xl shadow-violet-100/50">
+
+        <div className="text-6xl">📚</div>
+
+        <h2 className="mt-5 text-2xl sm:text-3xl font-black text-slate-800">
+          Bạn có bài làm đang dở!
+        </h2>
+
+        <p className="mx-auto mt-3 max-w-md text-sm sm:text-base leading-relaxed text-slate-500">
+          Bạn đang làm Quiz nhưng chưa hoàn thành.
+          Bạn có muốn tiếp tục từ câu trước không?
+        </p>
+
+        <div className="mt-7 grid gap-3 sm:grid-cols-2">
+
+          {/* Tiếp tục */}
+          <button
+            type="button"
+            onClick={() => {
+              clearTimeout(quizAutoNextTimer.current);
+              setQuizType(savedProgress.quizType);
+              setQuestionQueue(savedProgress.questionQueue);
+              setRetryQueue(savedProgress.retryQueue || []);
+              setCurrentIndex(savedProgress.currentIndex || 0);
+              setFirstTryScore(savedProgress.firstTryScore || 0);
+              setAttemptedIds(savedProgress.attemptedIds || []);
+              setSelectedOption(savedProgress.selectedOption || null);
+              setIsAnswered(savedProgress.isAnswered || false);
+              setOptions(savedProgress.options || []);
+              setStartTime(savedProgress.startTime || Date.now());
+              setShowResumePrompt(false);
+            }}
+            className="rounded-2xl bg-gradient-to-r from-violet-600 to-indigo-600 px-5 py-4 font-black text-white shadow-lg shadow-violet-200 transition hover:scale-[1.02]"
+          >
+            ▶ Tiếp tục bài đang làm
+          </button>
+
+          {/* Làm lại */}
+          <button
+            type="button"
+            onClick={() => {
+              clearTimeout(quizAutoNextTimer.current);
+              localStorage.removeItem(progressKey);
+
+              setSavedProgress(null);
+              setShowResumePrompt(false);
+
+              setQuizType(null);
+              setQuestionQueue([...terms]);
+              setRetryQueue([]);
+              setCurrentIndex(0);
+              setFirstTryScore(0);
+              setAttemptedIds([]);
+              setSelectedOption(null);
+              setIsAnswered(false);
+              setOptions([]);
+              setStartTime(Date.now());
+              setQuizType(null);
+            }}
+            className="rounded-2xl border-2 border-slate-200 bg-slate-50 px-5 py-4 font-black text-slate-700 transition hover:bg-slate-100"
+          >
+            ↻ Làm bài mới
+          </button>
+
+        </div>
+      </div>
+    </div>
+  );
+}
   // =========================================================
   // SCREEN 1: CHỌN KIỂU QUIZ
   // =========================================================
@@ -5523,15 +5617,19 @@ function QuizMode({ activeSet, onFinish, onBack }) {
 
           <button
             onClick={() => {
-              if (window.confirm('Bạn muốn thoát bài kiểm tra?')) {
-                setQuizType(null);
-              }
-            }}
+  if (
+    window.confirm(
+      'Bạn muốn tạm dừng bài kiểm tra? Tiến độ của bạn sẽ được lưu.'
+    )
+  ) {
+    setQuizType(null);
+  }
+}}
             type="button"
             className="flex items-center gap-2 px-3 py-2 rounded-xl text-sm font-bold text-slate-500 hover:bg-rose-50 hover:text-rose-500 transition"
           >
             <ArrowLeft className="w-4 h-4" />
-            Đổi kiểu kiểm tra
+Tạm dừng bài
           </button>
 
           <span className="px-3 py-1.5 rounded-full bg-indigo-50 text-indigo-600 text-xs font-extrabold">
@@ -5683,41 +5781,49 @@ function QuizMode({ activeSet, onFinish, onBack }) {
         })}
       </div>
 
-      {/* Feedback */}
-      {isAnswered && (
-        <div
-          className={`p-5 rounded-2xl border-2 text-center ${
-            selectedOption === correctAnswer
-              ? 'bg-emerald-50 border-emerald-200 text-emerald-700'
-              : 'bg-rose-50 border-rose-200 text-rose-700'
-          }`}
-        >
+    {/* Feedback */} 
+{isAnswered && (
+  <div
+    className={`p-5 rounded-2xl border-2 text-center ${
+      selectedOption === correctAnswer
+        ? 'bg-emerald-50 border-emerald-200 text-emerald-700'
+        : 'bg-rose-50 border-rose-200 text-rose-700'
+    }`}
+  >
+    <div className="text-3xl mb-2">
+      {selectedOption === correctAnswer ? '🎉' : '💪'}
+    </div>
 
-          <div className="text-3xl mb-2">
-            {selectedOption === correctAnswer ? '🎉' : '💪'}
-          </div>
+    <p className="text-lg font-black">
+      {selectedOption === correctAnswer
+        ? 'Chính xác! Tuyệt vời!'
+        : 'Chưa đúng rồi, hãy ghi nhớ nhé!'}
+    </p>
 
-          <p className="text-lg font-black">
-            {selectedOption === correctAnswer
-              ? 'Chính xác! Tuyệt vời!'
-              : 'Chưa đúng rồi, hãy ghi nhớ nhé!'}
-          </p>
+    {selectedOption !== correctAnswer && (
+      <p className="mt-2 text-sm font-semibold">
+        Đáp án đúng: {correctAnswer}
+      </p>
+    )}
 
-          {selectedOption !== correctAnswer && (
-            <p className="mt-2 text-sm font-semibold">
-              Đáp án đúng: {correctAnswer}
-            </p>
-          )}
-
-          <p className="mt-2 text-xs font-medium opacity-75">
-            {selectedOption === correctAnswer
-              ? 'Bạn đang tiến bộ từng chút một! ⭐'
-              : 'Từ này sẽ xuất hiện lại để bạn luyện tập.'}
-          </p>
-
-        </div>
-      )}
-
+    <p className="mt-2 text-xs font-medium opacity-75">
+      {selectedOption === correctAnswer
+        ? 'Bạn đang tiến bộ từng chút một! ⭐'
+        : 'Từ này sẽ xuất hiện lại để bạn luyện tập.'}
+    </p>
+    
+    {selectedOption !== correctAnswer && <button
+      type="button"
+      onClick={handleNextQuestion}
+      className="mt-5 w-full rounded-xl bg-indigo-600 px-5 py-3 font-black text-white shadow-md transition hover:bg-indigo-700 active:scale-[0.98]"
+    >
+      {currentIndex + 1 < questionQueue.length ||
+      retryQueue.length > 0
+        ? 'Câu tiếp theo →'
+        : 'Hoàn thành ✓'}
+    </button>}
+  </div>
+)}
     </div>
   );
 }
@@ -5753,11 +5859,42 @@ const [roundTerms, setRoundTerms] = useState(
   const [roundNumber, setRoundNumber] = useState(1);
   const [startTime] = useState(Date.now());
 
+  const progressKey = `vocabmaster_matching_progress_${activeSet.id}`;
+  const [pendingProgress, setPendingProgress] = useState(null);
+  const [progressReady, setProgressReady] = useState(false);
+  useEffect(() => {
+    setProgressReady(false);
+    try {
+      const data = JSON.parse(localStorage.getItem(progressKey) || 'null');
+      setPendingProgress(data && data.version === 1 ? data : null);
+    } catch { setPendingProgress(null); localStorage.removeItem(progressKey); }
+    setProgressReady(true);
+  }, [progressKey]);
+  useEffect(() => {
+    if (!progressReady || pendingProgress) return;
+    try { localStorage.setItem(progressKey, JSON.stringify({version: 1, remainingTerms, roundTerms, cards, selectedFirst, matchedIds, completedIds, roundNumber})); } catch { /* storage unavailable */ }
+  }, [progressReady, pendingProgress, progressKey, remainingTerms, roundTerms, cards, selectedFirst, matchedIds, completedIds, roundNumber]);
+  const resumeSavedProgress = () => {
+    const data = pendingProgress;
+    if (!data) return;
+    setRemainingTerms(data.remainingTerms);
+    setRoundTerms(data.roundTerms);
+    setCards(data.cards);
+    setSelectedFirst(data.selectedFirst);
+    setMatchedIds(data.matchedIds);
+    setCompletedIds(data.completedIds);
+    setRoundNumber(data.roundNumber);
+    setPendingProgress(null);
+  };
+  const restartSavedProgress = () => {
+    localStorage.removeItem(progressKey);
+    setPendingProgress(null);
+  };
   // =========================================================
   // TẠO CARDS CHO ROUND HIỆN TẠI
   // =========================================================
   useEffect(() => {
-    if (!roundTerms.length) return;
+    if (!roundTerms.length || pendingProgress || (cards.length && roundTerms.every(t => cards.some(c => c.termId === t.id)))) return;
 
     const termCards = roundTerms.map((t) => ({
       id: `term-${t.id}`,
@@ -5781,7 +5918,7 @@ const [roundTerms, setRoundTerms] = useState(
     setCards(shuffledCards);
     setMatchedIds([]);
     setSelectedFirst(null);
-  }, [roundTerms]);
+  }, [roundTerms, pendingProgress, cards]);
 
   // =========================================================
   // BẮT ĐẦU ROUND TIẾP THEO
@@ -5792,6 +5929,7 @@ const [roundTerms, setRoundTerms] = useState(
         (Date.now() - startTime) / 1000
       );
 
+      localStorage.removeItem(progressKey);
       onFinish({
         mode: 'matching',
         score: newCompletedIds.length,
@@ -5890,6 +6028,9 @@ const [roundTerms, setRoundTerms] = useState(
       </div>
     );
   }
+
+  if (!progressReady) return null;
+  if (pendingProgress) return <div className="mx-auto max-w-xl rounded-3xl border border-violet-200 bg-violet-50 p-7"><h2 className="text-xl font-black text-violet-900">📌 Bạn có bài làm đang dở!</h2><p className="mt-2 text-slate-600">Em muốn tiếp tục từ phần trước không?</p><div className="mt-5 flex flex-wrap gap-3"><button onClick={resumeSavedProgress} className="rounded-xl bg-violet-600 px-5 py-3 font-bold text-white">▶ Tiếp tục bài đang làm</button><button onClick={restartSavedProgress} className="rounded-xl border bg-white px-5 py-3 font-bold text-violet-700">↻ Làm bài mới</button></div></div>;
 
   const totalCompleted = completedIds.length + matchedIds.length;
 
@@ -5997,7 +6138,9 @@ const [roundTerms, setRoundTerms] = useState(
             );
           }
 
-          return (
+
+
+  return (
             <button
               key={card.id}
               onClick={() => handleCardClick(card)}
@@ -6047,7 +6190,40 @@ function SpellingMode({ activeSet, onFinish, onBack }) {
   const [feedback, setFeedback] = useState(null);
   const [isRetryRound, setIsRetryRound] = useState(false);
   const [startTime] = useState(Date.now());
-
+  const spellingAutoNextTimer = useRef(null);
+  useEffect(() => () => clearTimeout(spellingAutoNextTimer.current), []);
+  const progressKey = `vocabmaster_spelling_progress_${activeSet.id}`;
+  const [pendingProgress, setPendingProgress] = useState(null);
+  const [progressReady, setProgressReady] = useState(false);
+  useEffect(() => {
+    setProgressReady(false);
+    try {
+      const data = JSON.parse(localStorage.getItem(progressKey) || 'null');
+      setPendingProgress(data && data.version === 1 ? data : null);
+    } catch { setPendingProgress(null); localStorage.removeItem(progressKey); }
+    setProgressReady(true);
+  }, [progressKey]);
+  useEffect(() => {
+    if (!progressReady || pendingProgress) return;
+    try { localStorage.setItem(progressKey, JSON.stringify({version: 1, questionQueue, retryQueue, index, input, score, attemptedIds, feedback, isRetryRound})); } catch { /* storage unavailable */ }
+  }, [progressReady, pendingProgress, progressKey, questionQueue, retryQueue, index, input, score, attemptedIds, feedback, isRetryRound]);
+  const resumeSavedProgress = () => {
+    const data = pendingProgress;
+    if (!data) return;
+    setQuestionQueue(data.questionQueue);
+    setRetryQueue(data.retryQueue);
+    setIndex(data.index);
+    setInput(data.input);
+    setScore(data.score);
+    setAttemptedIds(data.attemptedIds);
+    setFeedback(data.feedback);
+    setIsRetryRound(data.isRetryRound);
+    setPendingProgress(null);
+  };
+  const restartSavedProgress = () => {
+    localStorage.removeItem(progressKey);
+    setPendingProgress(null);
+  };
   const currentTerm = questionQueue[index];
 
   useEffect(() => {
@@ -6056,77 +6232,86 @@ function SpellingMode({ activeSet, onFinish, onBack }) {
     }
   }, [index, questionQueue]);
 
+  const advanceSpelling = (wasCorrect) => {
+    clearTimeout(spellingAutoNextTimer.current);
+    const nextRetryQueue = wasCorrect
+      ? [...retryQueue]
+      : [...retryQueue, currentTerm];
+
+    setFeedback(null);
+    setInput('');
+
+    if (index + 1 < questionQueue.length) {
+      setRetryQueue(nextRetryQueue);
+      setIndex(prev => prev + 1);
+      return;
+    }
+
+    if (nextRetryQueue.length > 0) {
+      setQuestionQueue(nextRetryQueue);
+      setRetryQueue([]);
+      setIndex(0);
+      setIsRetryRound(true);
+      return;
+    }
+
+    localStorage.removeItem(progressKey);
+    onFinish({
+      mode: 'spelling',
+      score,
+      total: terms.length,
+      timeSeconds: Math.round((Date.now() - startTime) / 1000),
+    });
+  };
+
   const handleSubmit = (e) => {
     e.preventDefault();
-
     if (!input.trim() || feedback || !currentTerm) return;
 
-    const isCorrect =
-      input.trim().toLowerCase() ===
+    const isCorrect = input.trim().toLowerCase() ===
       currentTerm.term.trim().toLowerCase();
-
     const termKey = currentTerm.id ?? currentTerm.term;
     const hasAttempted = attemptedIds.includes(termKey);
 
-    if (!hasAttempted) {
-      setAttemptedIds(prev => [...prev, termKey]);
-    }
+    if (!hasAttempted) setAttemptedIds(prev => [...prev, termKey]);
 
     if (isCorrect) {
       playAudioFeedback('correct');
       setFeedback('correct');
-
-      if (!hasAttempted) {
-        setScore(prev => prev + 1);
-      }
+      if (!hasAttempted) setScore(prev => prev + 1);
+      spellingAutoNextTimer.current = setTimeout(() => {
+        // score trong closure chưa bao gồm điểm của câu vừa đúng.
+        // Trường hợp kết thúc, cộng điểm trước khi ghi kết quả.
+        const nextRetryQueue = [...retryQueue];
+        setFeedback(null);
+        setInput('');
+        if (index + 1 < questionQueue.length) {
+          setIndex(prev => prev + 1);
+        } else if (nextRetryQueue.length > 0) {
+          setQuestionQueue(nextRetryQueue);
+          setRetryQueue([]);
+          setIndex(0);
+          setIsRetryRound(true);
+        } else {
+          localStorage.removeItem(progressKey);
+          onFinish({
+            mode: 'spelling',
+            score: score + (!hasAttempted ? 1 : 0),
+            total: terms.length,
+            timeSeconds: Math.round((Date.now() - startTime) / 1000),
+          });
+        }
+      }, 1100);
     } else {
       playAudioFeedback('incorrect');
       setFeedback('incorrect');
+      // Không tự chuyển câu: học sinh đọc đáp án đúng rồi bấm Next.
     }
-
-    // Từ sai sẽ được đưa vào hàng đợi luyện lại.
-    const nextRetryQueue = isCorrect
-      ? [...retryQueue]
-      : [...retryQueue, currentTerm];
-
-    setTimeout(() => {
-      setFeedback(null);
-      setInput('');
-
-      // Tiếp tục câu tiếp theo trong vòng hiện tại.
-      if (index + 1 < questionQueue.length) {
-        setRetryQueue(nextRetryQueue);
-        setIndex(prev => prev + 1);
-        return;
-      }
-
-      // Nếu còn từ sai, bắt đầu một vòng luyện lại.
-      if (nextRetryQueue.length > 0) {
-        setQuestionQueue(nextRetryQueue);
-        setRetryQueue([]);
-        setIndex(0);
-        setIsRetryRound(true);
-        return;
-      }
-
-      // Tất cả các từ đã được viết đúng.
-      const finalScore =
-        score + (isCorrect && !hasAttempted ? 1 : 0);
-
-      const timeSeconds = Math.round(
-        (Date.now() - startTime) / 1000
-      );
-
-      onFinish({
-        mode: 'spelling',
-        score: finalScore,
-        total: terms.length,
-        timeSeconds
-      });
-    }, 1500);
   };
 
   if (!currentTerm) return null;
+
+  if (pendingProgress) return <div className="mx-auto max-w-xl rounded-3xl border border-violet-200 bg-violet-50 p-7"><h2 className="text-xl font-black text-violet-900">📌 Bạn có bài làm đang dở!</h2><p className="mt-2 text-slate-600">Em muốn tiếp tục từ phần trước không?</p><div className="mt-5 flex flex-wrap gap-3"><button onClick={resumeSavedProgress} className="rounded-xl bg-violet-600 px-5 py-3 font-bold text-white">▶ Tiếp tục bài đang làm</button><button onClick={restartSavedProgress} className="rounded-xl border bg-white px-5 py-3 font-bold text-violet-700">↻ Làm bài mới</button></div></div>;
 
   return (
     <div className="max-w-md mx-auto space-y-6">
@@ -6208,13 +6393,24 @@ function SpellingMode({ activeSet, onFinish, onBack }) {
           </div>
         )}
 
-        <button
+        {!feedback && <button
           type="submit"
-          disabled={!input.trim() || !!feedback}
+          disabled={!input.trim()}
           className="w-full py-3.5 bg-indigo-600 hover:bg-indigo-700 disabled:opacity-50 text-white rounded-2xl font-bold transition shadow-md"
         >
           Kiểm Tra
-        </button>
+        </button>}
+
+        {feedback === 'incorrect' && (
+          <button
+            type="button"
+            onClick={() => advanceSpelling(false)}
+            className="w-full py-3.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-2xl font-bold transition shadow-md"
+          >
+            {index + 1 < questionQueue.length || retryQueue.length > 0
+              ? 'Câu tiếp theo →' : 'Luyện lại từ sai →'}
+          </button>
+        )}
       </form>
     </div>
   );
