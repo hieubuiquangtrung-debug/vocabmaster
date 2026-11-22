@@ -1,4 +1,9 @@
 // @ts-nocheck
+import './teacher-studio.css';
+import './world-navigation.css';
+import TeacherInsights from './TeacherInsights';
+import SmartLearning from './SmartLearning';
+import { recordStudyOutcome } from './smart-learning-engine';
 import { useState, useEffect, useRef } from 'react';
 import * as XLSX from 'xlsx';
 import {
@@ -39,8 +44,10 @@ import WordCafe from './WordCafe';
 import NomNom from './NomNom';
 import GrammarPractice from './GrammarPractice';
 import ArcadeStudentHome from './ArcadeStudentHome';
+import { ArcadePlayerHub, ArcadeCompanion } from './ArcadeRewards';
 import { awardPracticeXP } from './ArcadeRewards';
 import { ArcadeMiniGames } from './ArcadeMiniGames';
+import { LearningAnalytics } from './LearningAnalytics';
 import { initializeApp } from 'firebase/app';
 import { 
   getAuth,
@@ -1338,6 +1345,7 @@ const setPayload = {
   localStorage.setItem('vocab_student_name', studentName);
   localStorage.setItem('vocab_student_class', studentClass);
   if (activeSet) awardPracticeXP(studentCode, activeSet.id, String(scoreData.mode || 'practice'), Number(scoreData.score || 0), Number(scoreData.total || 0));
+  if (activeSet) recordStudyOutcome(studentCode, activeSet, scoreData);
   setLatestScoreData(scoreData);
   setActiveStudyMode('completed');
 
@@ -1851,8 +1859,15 @@ setRosterStages,
   const [testExcelFileName, setTestExcelFileName] = useState('');
   const [editingTestId, setEditingTestId] = useState('');
   const [editingQuestionIndex, setEditingQuestionIndex] = useState(-1);
-  const [activeTab, setActiveTab] = useState('sets');
+  const [activeTab, setActiveTab] = useState('overview');
+  const [rosterSearch, setRosterSearch] = useState('');
+  const [rosterGroupFilter, setRosterGroupFilter] = useState('');
   const [selectedGroup, setSelectedGroup] = useState('');
+  const classCount = new Set(roster.map((r: any) => String(r.className || '').trim()).filter(Boolean)).size;
+  const filteredRoster = roster.filter((r: any) => {
+    const q = rosterSearch.trim().toLocaleLowerCase('vi');
+    return (!q || [r.id,r.name,r.className,...(r.stages||[])].some(x => String(x||'').toLocaleLowerCase('vi').includes(q))) && (!rosterGroupFilter || (r.stages||[]).includes(rosterGroupFilter));
+  });
   const [setSearch, setSetSearch] = useState('');
   const [setSort, setSetSort] = useState('recent');
   const [setView, setSetView] = useState('grid');
@@ -2686,7 +2701,8 @@ const handleDeleteSelectedResults = async () => {
         /* MAIN TEACHER VIEW: SETS & RESULTS */
         <div className="space-y-6">
           {/* Sub Navigation */}
-          <div className="flex border-b border-slate-200">
+          <div className="flex gap-2 overflow-x-auto border-b border-slate-200 pb-1 teacher-studio-tabs">
+          <button type="button" onClick={() => setActiveTab('overview')} className={`shrink-0 rounded-xl px-4 py-2.5 text-sm font-bold ${activeTab==='overview'?'bg-indigo-600 text-white':'bg-indigo-50 text-indigo-700 hover:bg-indigo-100'}`}>✨ Tổng quan</button>
            <button
   onClick={() => setActiveTab('sets')}
   className={`pb-3 px-4 font-semibold text-sm border-b-2 flex items-center gap-2 transition ${
@@ -2708,6 +2724,10 @@ const handleDeleteSelectedResults = async () => {
 >
   <Trophy className="w-4 h-4" /> Kết Quả & Bảng Xếp Hạng ({filteredResults.length})
 </button>
+
+
+
+<button type="button" onClick={() => setActiveTab('analytics')} className={`pb-3 px-4 font-semibold text-sm border-b-2 ${activeTab==='analytics'?'border-indigo-600 text-indigo-600':'border-transparent text-slate-500'}`}>📊 Learning Insights</button>
 
 <button
   onClick={() => setActiveTab('tests')}
@@ -2742,7 +2762,35 @@ const handleDeleteSelectedResults = async () => {
 </div>
 
 
-{activeTab === 'grammar' ? (
+{activeTab === 'overview' ? (
+  <section className="teacher-studio space-y-6">
+    <div className="rounded-3xl bg-gradient-to-r from-indigo-700 via-violet-700 to-fuchsia-600 p-6 sm:p-8 text-white shadow-lg">
+      <p className="text-xs font-bold tracking-[.2em] text-indigo-100">VOCABMASTER · TEACHER STUDIO</p>
+      <h2 className="mt-2 text-2xl sm:text-3xl font-black">Chào mừng trở lại! 👋</h2>
+      <p className="mt-2 text-sm text-indigo-100">Quản lý bài học, học sinh và kết quả tại một nơi.</p>
+    </div>
+    <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
+      {[
+        ['👩‍🎓','Học sinh',roster.length],['🏫','Lớp',classCount],['📚','Vocabulary Packs',sets.length],['📝','Bài kiểm tra',vocabTests.length]
+      ].map(([emoji,label,value])=><div key={String(label)} className="rounded-2xl border border-slate-200 bg-white p-4 sm:p-5 shadow-sm"><div className="text-2xl">{emoji}</div><p className="mt-2 text-xs font-bold text-slate-500">{label}</p><p className="mt-1 text-3xl font-black text-slate-800">{value}</p></div>)}
+    </div>
+    <div className="rounded-3xl border border-slate-200 bg-white p-5 sm:p-6 shadow-sm">
+      <h3 className="text-xl font-black text-slate-800">⚡ Thao tác nhanh</h3>
+      <p className="mt-1 text-sm text-slate-500">Chọn công việc bạn muốn thực hiện.</p>
+      <div className="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+        {[
+          ['📚','Thư viện Vocabulary','sets'],['🧠','Quản lý Grammar','grammar'],['👥','Quản lý học sinh','roster'],['📊','Kết quả học tập','leaderboard'],['📈','Learning Analytics','analytics'],['📝','Bài kiểm tra','tests']
+        ].map(([emoji,label,tab])=><button type="button" key={tab} onClick={()=>setActiveTab(tab)} className="flex items-center gap-3 rounded-2xl border border-slate-200 bg-slate-50 p-4 text-left font-bold text-slate-700 transition hover:border-indigo-300 hover:bg-indigo-50"><span className="text-2xl">{emoji}</span><span>{label}</span><span className="ml-auto text-indigo-500">→</span></button>)}
+      </div>
+    </div>
+    <div className="grid gap-4 lg:grid-cols-2">
+      <div className="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm"><h3 className="font-black text-slate-800">📚 Bộ từ gần đây</h3><div className="mt-3 space-y-2">{sets.slice(0,5).map((item:any)=><button key={item.id} type="button" onClick={()=>{setActiveTab('sets');handleStartEditSet(item);}} className="flex w-full items-center justify-between rounded-xl bg-slate-50 px-3 py-3 text-left text-sm hover:bg-indigo-50"><span className="font-semibold text-slate-700">{item.title}</span><span className="shrink-0 text-slate-400">{item.terms?.length||0} từ</span></button>)}{sets.length===0&&<p className="text-sm text-slate-500">Chưa có bộ từ nào.</p>}</div></div>
+      <div className="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm"><h3 className="font-black text-slate-800">🏫 Lớp học</h3><div className="mt-3 flex flex-wrap gap-2">{Array.from(new Set(roster.map((r:any)=>String(r.className||'').trim()).filter(Boolean))).map((name:any)=><button key={name} type="button" onClick={()=>{setRosterSearch(name);setActiveTab('roster');}} className="rounded-xl bg-indigo-50 px-3 py-2 text-sm font-bold text-indigo-700 hover:bg-indigo-100">{name}</button>)}{classCount===0&&<p className="text-sm text-slate-500">Chưa có lớp nào.</p>}</div></div>
+    </div>
+  </section>
+) : activeTab === 'analytics' ? (
+  <TeacherInsights db={db} appId={appId} roster={roster} vocabResults={results} testResults={vocabTestResults} sets={sets} />
+) : activeTab === 'grammar' ? (
   <GrammarPractice db={db} appId={appId} teacher={true} groupOptions={groupOptions} onAddGroupName={handleAddGroupName} onDeleteGroup={handleDeleteGroup} />
 ) : activeTab === 'tests' ? (
   <div className="space-y-5">
@@ -3777,6 +3825,14 @@ const handleDeleteSelectedResults = async () => {
                 </form>
               </div>
 
+              <div className="rounded-2xl border border-indigo-100 bg-indigo-50/50 p-4 sm:p-5">
+                <h3 className="font-black text-indigo-900">🔎 Tìm kiếm học sinh</h3>
+                <div className="mt-3 grid gap-3 sm:grid-cols-2">
+                  <input type="search" value={rosterSearch} onChange={e=>setRosterSearch(e.target.value)} placeholder="Tên, mã học sinh hoặc lớp..." className="w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm" />
+                  <select value={rosterGroupFilter} onChange={e=>setRosterGroupFilter(e.target.value)} className="w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm"><option value="">Tất cả Stage / nhóm</option>{groupOptions.map((g:string)=><option key={g} value={g}>{g}</option>)}</select>
+                </div>
+                <p className="mt-2 text-xs text-slate-500">Hiển thị {filteredRoster.length} / {roster.length} học sinh</p>
+              </div>
               {/* Bảng danh sách học sinh */}
               <div className="bg-white rounded-2xl border border-slate-200 overflow-hidden shadow-sm">
                 <div className="p-4 bg-slate-50 border-b border-slate-200 flex justify-between items-center gap-3">
@@ -3819,7 +3875,7 @@ const handleDeleteSelectedResults = async () => {
 </thead>
 
                     <tbody className="divide-y divide-slate-100">
-                      {roster.length === 0 ? (
+                      {filteredRoster.length === 0 ? (
                         <tr>
                           <td
                             colSpan={6}
@@ -3829,7 +3885,7 @@ const handleDeleteSelectedResults = async () => {
                           </td>
                         </tr>
                       ) : (
-                        roster
+                        filteredRoster
                           .slice()
                           .sort((a, b) =>
                             String(a.className || '').localeCompare(
@@ -4035,7 +4091,10 @@ const isCorrect = correctAnswer
 
   return (
     <div className="space-y-6">
-       {activeStudyMode === 'grammar-practice' ? (
+       {isStudentVerified && <ArcadeCompanion studentCode={studentCode} db={db} appId={appId} onOpenWorld={() => setActiveStudyMode('player-world')} />}
+       {activeStudyMode === 'player-world' ? (
+  <div className="vm-world-page"><button type="button" className="vm-world-back" onClick={() => setActiveStudyMode('menu')}>← Quay lại trang chủ</button><ArcadePlayerHub studentCode={studentCode} /></div>
+) : activeStudyMode === 'grammar-practice' ? (
   <GrammarPractice db={db} appId={appId} studentStages={studentStages} studentCode={studentCode} studentName={studentName} studentClass={studentClass} groupOptions={groupOptions} onBack={() => setActiveStudyMode('menu')} />
 ) : activeStudyMode === 'menu' ? (
   <>
@@ -4073,9 +4132,9 @@ const isCorrect = correctAnswer
       </section>
     )}
 
+    {isStudentVerified && <button type="button" className="vm-world-entry" onClick={() => setActiveStudyMode('player-world')}><span className="vm-world-entry-icon">🏡</span><span><strong>Thế giới nhỏ của bạn</strong><small>Avatar Studio · My Pet · Rewards Shop · Pet World</small></span><span aria-hidden="true">Khám phá →</span></button>}
     {/* STUDENT HOME — ARCADE PHASE 1. Verification and navigation logic remain in App.tsx. */}
     <ArcadeStudentHome
-
       studentName={studentName}
       studentClass={studentClass}
       isStudentVerified={isStudentVerified}
@@ -4156,6 +4215,11 @@ const isCorrect = correctAnswer
         </div>
       }
     />
+    {isStudentVerified && (
+      <>
+      <SmartLearning db={db} appId={appId} studentCode={studentCode} sets={sets} onOpenVocabulary={(id:string)=>{setSelectedSetId(id);setActiveStudyMode('vocabulary-menu');}} onOpenGrammar={()=>setActiveStudyMode('grammar-practice')} />
+      </>
+    )}
   </>
 ) : (
   /* COMPACT HEADER — WHEN STUDYING */
@@ -4591,7 +4655,7 @@ const isCorrect = correctAnswer
   
   <CompletionScreen
     scoreData={latestScoreData}
-    onRestart={() => setActiveStudyMode(latestScoreData.mode || 'menu')}
+    onRestart={() => setActiveStudyMode(String(latestScoreData.mode || '').startsWith('arcade-') ? 'arcade-mini-games' : (latestScoreData.mode || 'menu'))}
     onBack={() => setActiveStudyMode('menu')}
   />
 ) : null}
@@ -6430,6 +6494,13 @@ function CompletionScreen({ scoreData, onRestart, onBack }) {
         <p className="text-slate-500 text-xs mt-1">Kết quả của bạn đã được ghi nhận thành công.</p>
       </div>
 
+      {String(scoreData.mode || '').toLowerCase().includes('runner') && Number(scoreData.total) > 0 && (
+        <div className="rounded-2xl bg-amber-50 border border-amber-200 p-5" role="status">
+          <div className="text-4xl">{Number(scoreData.score) === Number(scoreData.total) ? '🥇' : Number(scoreData.score) === Number(scoreData.total)-1 ? '🥈' : Number(scoreData.score) === Number(scoreData.total)-2 ? '🥉' : '🏁'}</div>
+          <div className="text-2xl font-black text-amber-800">TOP {1 + Math.max(0, Number(scoreData.total)-Number(scoreData.score))}</div>
+          <p className="text-sm text-amber-700">Bạn đã vượt qua {Number(scoreData.score)} đối thủ trong cuộc đua!</p>
+        </div>
+      )}
       <div className="grid grid-cols-2 gap-3 bg-slate-50 p-4 rounded-2xl border border-slate-100">
         <div>
           <span className="text-xs text-slate-400 font-medium">Điểm số</span>
@@ -6437,7 +6508,7 @@ function CompletionScreen({ scoreData, onRestart, onBack }) {
         </div>
         <div>
           <span className="text-xs text-slate-400 font-medium">Thời gian</span>
-          <p className="text-2xl font-black text-slate-700">{scoreData.timeSeconds}s</p>
+          <p className="text-2xl font-black text-slate-700">{Number.isFinite(Number(scoreData.timeSeconds)) ? `${Math.round(Number(scoreData.timeSeconds))}s` : '—'}</p>
         </div>
       </div>
 

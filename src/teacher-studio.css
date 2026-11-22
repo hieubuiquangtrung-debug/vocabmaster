@@ -1,0 +1,5 @@
+.teacher-studio button{min-height:44px}
+.teacher-studio-tabs{scrollbar-width:thin;overscroll-behavior-x:contain}
+.teacher-studio-tabs>button{flex-shrink:0;white-space:nowrap}
+@media(max-width:640px){.teacher-studio{min-width:0}.teacher-studio .grid{min-width:0}.teacher-studio button{touch-action:manipulation}}
+@media(prefers-reduced-motion:reduce){.teacher-studio *{transition:none!important;animation:none!important}}
