@@ -1,6 +1,12 @@
 // @ts-nocheck
+import './magical-world.css';
 import './teacher-studio.css';
+import './teacher-pro.css';
+import './aurora-navigation.css';
+import LearningExperience from './LearningExperience';
 import './world-navigation.css';
+import './premium-learning-ui.css';
+import './learning-playground.css';
 import TeacherInsights from './TeacherInsights';
 import SmartLearning from './SmartLearning';
 import { recordStudyOutcome } from './smart-learning-engine';
@@ -13,7 +19,6 @@ import {
   Edit,
   Play,
   Trophy,
-  Users,
   CheckCircle,
   XCircle,
   RotateCw,
@@ -1402,6 +1407,7 @@ const setPayload = {
         bestTotal: newTotal,
         bestPercentage: newPercentage,
 
+        ...(typeof scoreData.firstCorrect === "number" ? {lastFirstCorrect: scoreData.firstCorrect, lastSecondCorrect: scoreData.secondCorrect, lastMissed: scoreData.missed, lastHinted: scoreData.hinted} : {}),
         lastScore: newScore,
         lastTotal: newTotal,
         lastPercentage: newPercentage,
@@ -1432,6 +1438,7 @@ const setPayload = {
             }
           : {}),
 
+        ...(typeof scoreData.firstCorrect === "number" ? {lastFirstCorrect: scoreData.firstCorrect, lastSecondCorrect: scoreData.secondCorrect, lastMissed: scoreData.missed, lastHinted: scoreData.hinted} : {}),
         lastScore: newScore,
         lastTotal: newTotal,
         lastPercentage: newPercentage,
@@ -1465,51 +1472,16 @@ const setPayload = {
   return (
     <div className="min-h-screen bg-slate-50 text-slate-800 flex flex-col font-sans">
       {/* Top Navbar */}
-      <header className="bg-white border-b border-slate-200 sticky top-0 z-40 shadow-sm">
-        <div className="max-w-7xl mx-mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
-          <div className="flex items-center space-x-3 cursor-pointer" onClick={() => setActiveStudyMode('menu')}>
-            <div className="bg-indigo-600 text-white p-2.5 rounded-xl shadow-md">
-              <BookOpen className="w-6 h-6" />
-            </div>
-            <div>
-              <h1 className="font-bold text-xl text-slate-900 tracking-tight flex items-center gap-2">
-                Vocab<span className="text-indigo-600">Master</span>
-                <span className="text-xs font-semibold uppercase px-2 py-0.5 bg-indigo-100 text-indigo-700 rounded-full">Luyện Từ Vựng</span>
-              </h1>
-            </div>
-          </div>
-
-          {/* Role Toggle Switch */}
-          <div className="flex items-center space-x-2 bg-slate-100 p-1 rounded-xl border border-slate-200">
-            <button
-              onClick={() => { setMode('student'); setActiveStudyMode('menu'); }}
-              className={`flex items-center space-x-2 px-4 py-1.5 rounded-lg text-sm font-medium transition-all ${
-                mode === 'student' 
-                  ? 'bg-white text-indigo-600 shadow-sm' 
-                  : 'text-slate-600 hover:text-slate-900'
-              }`}
-            >
-              <Users className="w-4 h-4" />
-              <span>Học Sinh</span>
-            </button>
-            <button
-            onClick={() => {
-  if (isTeacherLoggedIn) {
-    setMode('teacher');
-    setIsCreatingSet(false);
-  } else {
-    setMode('teacher-login');
-  }
-}}
-               className={`flex items-center space-x-2 px-4 py-1.5 rounded-lg text-sm font-medium transition-all ${
-                mode === 'teacher' 
-                  ? 'bg-indigo-600 text-white shadow-sm' 
-                  : 'text-slate-600 hover:text-slate-900'
-              }`}
-            >
-              <Key className="w-4 h-4" />
-              <span>Giáo Viên</span>
-            </button>
+      <header className="vm-aurora-nav" data-role={mode === 'student' ? 'student' : 'teacher'}>
+        <div className="vm-aurora-inner">
+          <button type="button" className="vm-aurora-brand" onClick={() => setActiveStudyMode('menu')}>
+            <span className="vm-aurora-logo"><BookOpen className="w-6 h-6" /><i aria-hidden="true">✦</i></span>
+            <span className="vm-aurora-wordmark"><strong>Vocab<span>Master</span></strong><small>LEARN · PLAY · SHINE</small></span>
+          </button>
+          <div className="vm-aurora-art" aria-hidden="true"><span className="vm-aurora-orbit"/><span className="vm-aurora-gem">💎</span><span className="vm-aurora-rocket">🚀</span><span className="vm-aurora-star">🌟</span><span className="vm-aurora-spark">✦</span><span className="vm-aurora-spark second">✧</span></div>
+          <div className="vm-aurora-switch" role="group" aria-label="Chọn vai trò">
+            <button type="button" aria-pressed={mode === 'student'} onClick={() => { setMode('student'); setActiveStudyMode('menu'); }}><span aria-hidden="true">🎮</span> Học sinh</button>
+            <button type="button" aria-pressed={mode !== 'student'} onClick={() => { if (isTeacherLoggedIn) { setMode('teacher'); setIsCreatingSet(false); } else { setMode('teacher-login'); } }}><span aria-hidden="true">🎓</span> Giáo viên</button>
           </div>
         </div>
       </header>
@@ -2206,89 +2178,7 @@ const handleDeleteSelectedResults = async () => {
   }
 };
   return (
-    <div className="space-y-6">
-      {/* Teacher Top Bar */}
-      <div className="bg-indigo-900 text-white p-6 rounded-2xl shadow-xl flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
-        <div>
-          <span className="text-xs uppercase font-bold tracking-wider text-indigo-300 bg-indigo-800/80 px-2.5 py-1 rounded-md">
-            Giao Diện Quản Lý Giáo Viên
-          </span>
-          <h2 className="text-2xl font-extrabold mt-2">Bảng Điều Khiển Lớp Học</h2>
-          <p className="text-indigo-200 text-sm mt-1">
-            Tạo bài tập từ vựng, chia sẻ link cho học sinh và xem bảng xếp hạng điểm thực tế.
-          </p>
-        </div>
-
-        <div className="flex flex-wrap gap-2">
-          {!isCreatingSet && (
-            <button
-              onClick={() => {
-                setSetTitle('');
-                setSetDescription('');
-                setIsCreatingSet(true);
-              }}
-              className="bg-emerald-500 hover:bg-emerald-600 text-white font-semibold px-4 py-2.5 rounded-xl shadow-lg transition-all flex items-center gap-2 text-sm"
-            >
-              <Plus className="w-5 h-5" />
-              Tạo Bộ Từ Mới
-            </button>
-          )}
-          <div className="relative">
-  <div className="flex items-center gap-2">
-    <button
-      onClick={copyShareLink}
-      className="bg-indigo-700 hover:bg-indigo-600 text-indigo-100 font-semibold px-4 py-2.5 rounded-xl transition-all flex items-center gap-2 text-sm border border-indigo-500/30"
-    >
-      {copiedLink ? (
-        <Check className="w-4 h-4 text-emerald-400" />
-      ) : (
-        <Share2 className="w-4 h-4" />
-      )}
-      {copiedLink ? "Đã sao chép Link!" : "Sao Chép Link Học Sinh"}
-    </button>
-
-    <button
-      onClick={() => setShowQRCode(!showQRCode)}
-      className="bg-white/10 hover:bg-white/20 text-white font-semibold px-4 py-2.5 rounded-xl transition-all flex items-center gap-2 text-sm border border-white/20"
-    >
-      <Grid className="w-4 h-4" />
-      QR Code
-    </button>
-  </div>
-
-  {showQRCode && selectedSetId && (
-    <div className="absolute right-0 top-full mt-3 z-50 bg-white p-5 rounded-2xl shadow-xl border border-slate-200 w-72">
-      <div className="text-center">
-        <h4 className="font-bold text-slate-800 text-sm">
-  {selectedSet?.title || 'Bài học'}
-</h4>
-
-        <p className="text-xs text-slate-500 mt-1 mb-4">
-          Học sinh quét mã để mở bài học
-        </p>
-
-        <div className="flex justify-center">
-          <QRCodeSVG
-            value={`${window.location.origin}/?set=${selectedSetId}`}
-            size={200}
-            level="H"
-          />
-        </div>
-
-        <button
-          onClick={() => setShowQRCode(false)}
-          className="mt-4 text-xs font-semibold text-slate-500 hover:text-slate-800"
-        >
-          Đóng
-        </button>
-      </div>
-    </div>
-  )}
-</div>
-          
-        </div>
-      </div>
-
+    <div className="teacher-pro space-y-6">
       {isCreatingSet ? (
         /* CREATE / EDIT SET FORM */
         <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-200 animate-fadeIn">
@@ -2700,76 +2590,23 @@ const handleDeleteSelectedResults = async () => {
           
         /* MAIN TEACHER VIEW: SETS & RESULTS */
         <div className="space-y-6">
-          {/* Sub Navigation */}
-          <div className="flex gap-2 overflow-x-auto border-b border-slate-200 pb-1 teacher-studio-tabs">
-          <button type="button" onClick={() => setActiveTab('overview')} className={`shrink-0 rounded-xl px-4 py-2.5 text-sm font-bold ${activeTab==='overview'?'bg-indigo-600 text-white':'bg-indigo-50 text-indigo-700 hover:bg-indigo-100'}`}>✨ Tổng quan</button>
-           <button
-  onClick={() => setActiveTab('sets')}
-  className={`pb-3 px-4 font-semibold text-sm border-b-2 flex items-center gap-2 transition ${
-    activeTab === 'sets'
-      ? 'border-indigo-600 text-indigo-600'
-      : 'border-transparent text-slate-500 hover:text-slate-800'
-  }`}
->
-  <BookOpen className="w-4 h-4" /> Danh Sách Bộ Từ ({sets.length})
-</button>
-
-<button
-  onClick={() => setActiveTab('leaderboard')}
-  className={`pb-3 px-4 font-semibold text-sm border-b-2 flex items-center gap-2 transition ${
-    activeTab === 'leaderboard'
-      ? 'border-indigo-600 text-indigo-600'
-      : 'border-transparent text-slate-500 hover:text-slate-800'
-  }`}
->
-  <Trophy className="w-4 h-4" /> Kết Quả & Bảng Xếp Hạng ({filteredResults.length})
-</button>
-
-
-
-<button type="button" onClick={() => setActiveTab('analytics')} className={`pb-3 px-4 font-semibold text-sm border-b-2 ${activeTab==='analytics'?'border-indigo-600 text-indigo-600':'border-transparent text-slate-500'}`}>📊 Learning Insights</button>
-
-<button
-  onClick={() => setActiveTab('tests')}
-  className={`pb-3 px-4 font-semibold text-sm border-b-2 flex items-center gap-2 transition ${
-    activeTab === 'tests'
-      ? 'border-indigo-600 text-indigo-600'
-      : 'border-transparent text-slate-500 hover:text-slate-800'
-  }`}
->
-  <BookOpen className="w-4 h-4" /> Bài kiểm tra ({vocabTests.length})
-</button>
-
-<button
-  onClick={() => setActiveTab('grammar')}
-  className={`pb-3 px-4 font-semibold text-sm border-b-2 flex items-center gap-2 transition ${activeTab === 'grammar' ? 'border-violet-600 text-violet-600' : 'border-transparent text-slate-500 hover:text-slate-800'}`}
->
-  <BookOpen className="w-4 h-4" /> Grammar Practice
-</button>
-
-{/* Student roster */}
-<button
-  onClick={() => setActiveTab('roster')}
-  className={`pb-3 px-4 font-semibold text-sm border-b-2 flex items-center gap-2 transition ${
-    activeTab === 'roster'
-      ? 'border-indigo-600 text-indigo-600'
-      : 'border-transparent text-slate-500 hover:text-slate-800'
-  }`}
->
-  <Users className="w-4 h-4" /> Danh sách học sinh ({roster.length})
-</button>
-
-</div>
-
-
+          <div className="tp-layout">
+            <nav className="tp-nav" aria-label="Không gian giáo viên">
+              <div className="tp-brand"><span>✦</span> Teacher Studio <small>PRO WORKSPACE</small></div>
+              {[
+                {label:'Không gian làm việc',items:[['overview','🏠','Tổng quan'],['sets','📚','Từ vựng'],['grammar','🧠','Ngữ pháp'],['tests','📝','Bài kiểm tra']]},
+                {label:'Quản lý & theo dõi',items:[['roster','👥','Học sinh & lớp'],['leaderboard','🏆','Kết quả học tập'],['analytics','📊','Phân tích & báo cáo']]}
+              ].map(group=><div className="tp-nav-group" key={group.label}><p>{group.label}</p>{group.items.map(([id,emoji,label])=><button type="button" key={id} aria-current={activeTab===id?'page':undefined} onClick={()=>setActiveTab(id)} className={activeTab===id?'tp-active':''}><span aria-hidden="true">{emoji}</span><span>{label}</span></button>)}</div>)}
+            </nav>
+            <div className="tp-content" key="teacher-content">
 {activeTab === 'overview' ? (
   <section className="teacher-studio space-y-6">
-    <div className="rounded-3xl bg-gradient-to-r from-indigo-700 via-violet-700 to-fuchsia-600 p-6 sm:p-8 text-white shadow-lg">
+    <div className="tp-hero rounded-3xl bg-gradient-to-r from-indigo-700 via-violet-700 to-fuchsia-600 p-6 sm:p-8 text-white shadow-lg">
       <p className="text-xs font-bold tracking-[.2em] text-indigo-100">VOCABMASTER · TEACHER STUDIO</p>
       <h2 className="mt-2 text-2xl sm:text-3xl font-black">Chào mừng trở lại! 👋</h2>
       <p className="mt-2 text-sm text-indigo-100">Quản lý bài học, học sinh và kết quả tại một nơi.</p>
     </div>
-    <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
+    <div className="tp-metrics grid grid-cols-2 gap-3 lg:grid-cols-4">
       {[
         ['👩‍🎓','Học sinh',roster.length],['🏫','Lớp',classCount],['📚','Vocabulary Packs',sets.length],['📝','Bài kiểm tra',vocabTests.length]
       ].map(([emoji,label,value])=><div key={String(label)} className="rounded-2xl border border-slate-200 bg-white p-4 sm:p-5 shadow-sm"><div className="text-2xl">{emoji}</div><p className="mt-2 text-xs font-bold text-slate-500">{label}</p><p className="mt-1 text-3xl font-black text-slate-800">{value}</p></div>)}
@@ -3196,6 +3033,75 @@ const handleDeleteSelectedResults = async () => {
   /* TAB 1: SETS LIST */
 
   <>
+<div className="vm-vocab-toolbar"><div><small>TEACHER STUDIO · VOCABULARY</small><h2>📚 Vocabulary Studio</h2></div>        <div className="flex flex-wrap gap-2">
+          {!isCreatingSet && (
+            <button
+              onClick={() => {
+                setSetTitle('');
+                setSetDescription('');
+                setIsCreatingSet(true);
+              }}
+              className="bg-emerald-500 hover:bg-emerald-600 text-white font-semibold px-4 py-2.5 rounded-xl shadow-lg transition-all flex items-center gap-2 text-sm"
+            >
+              <Plus className="w-5 h-5" />
+              Tạo Bộ Từ Mới
+            </button>
+          )}
+          <div className="relative">
+  <div className="flex items-center gap-2">
+    <button
+      onClick={copyShareLink}
+      className="bg-indigo-700 hover:bg-indigo-600 text-indigo-100 font-semibold px-4 py-2.5 rounded-xl transition-all flex items-center gap-2 text-sm border border-indigo-500/30"
+    >
+      {copiedLink ? (
+        <Check className="w-4 h-4 text-emerald-400" />
+      ) : (
+        <Share2 className="w-4 h-4" />
+      )}
+      {copiedLink ? "Đã sao chép Link!" : "Sao Chép Link Học Sinh"}
+    </button>
+
+    <button
+      onClick={() => setShowQRCode(!showQRCode)}
+      className="bg-indigo-100 hover:bg-indigo-200 text-indigo-800 font-semibold px-4 py-2.5 rounded-xl transition-all flex items-center gap-2 text-sm border border-indigo-200"
+    >
+      <Grid className="w-4 h-4" />
+      QR Code
+    </button>
+  </div>
+
+  {showQRCode && selectedSetId && (
+    <div className="absolute right-0 top-full mt-3 z-50 bg-white p-5 rounded-2xl shadow-xl border border-slate-200 w-72">
+      <div className="text-center">
+        <h4 className="font-bold text-slate-800 text-sm">
+  {selectedSet?.title || 'Bài học'}
+</h4>
+
+        <p className="text-xs text-slate-500 mt-1 mb-4">
+          Học sinh quét mã để mở bài học
+        </p>
+
+        <div className="flex justify-center">
+          <QRCodeSVG
+            value={`${window.location.origin}/?set=${selectedSetId}`}
+            size={200}
+            level="H"
+          />
+        </div>
+
+        <button
+          onClick={() => setShowQRCode(false)}
+          className="mt-4 text-xs font-semibold text-slate-500 hover:text-slate-800"
+        >
+          Đóng
+        </button>
+      </div>
+    </div>
+  )}
+</div>
+          
+        </div>
+</div>
     {/* Search and library controls */}
     <div className="mb-5 bg-white rounded-2xl border border-slate-200 p-4 sm:p-5 space-y-4">
       <div className="flex flex-col lg:flex-row gap-3">
@@ -3979,6 +3885,8 @@ const handleDeleteSelectedResults = async () => {
               </div>
             </div>
               )}
+            </div>
+          </div>
       </div>
     )}
   </div>
@@ -4091,7 +3999,7 @@ const isCorrect = correctAnswer
 
   return (
     <div className="space-y-6">
-       {isStudentVerified && <ArcadeCompanion studentCode={studentCode} db={db} appId={appId} onOpenWorld={() => setActiveStudyMode('player-world')} />}
+       {isStudentVerified && <ArcadeCompanion studentCode={studentCode} db={db} appId={appId} visible={false} />}
        {activeStudyMode === 'player-world' ? (
   <div className="vm-world-page"><button type="button" className="vm-world-back" onClick={() => setActiveStudyMode('menu')}>← Quay lại trang chủ</button><ArcadePlayerHub studentCode={studentCode} /></div>
 ) : activeStudyMode === 'grammar-practice' ? (
@@ -4223,27 +4131,7 @@ const isCorrect = correctAnswer
   </>
 ) : (
   /* COMPACT HEADER — WHEN STUDYING */
-  <div className="mb-5 flex items-center justify-between gap-3 rounded-2xl border border-violet-100 bg-white px-4 py-3 shadow-sm sm:px-5">
-    <div className="flex min-w-0 items-center gap-3">
-      <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-violet-100 text-xl">
-        📚
-      </div>
-
-      <div className="min-w-0">
-        <p className="truncate font-extrabold text-slate-800">
-          {isStudentVerified ? studentName : 'Bạn nhỏ'}
-        </p>
-
-        <p className="truncate text-xs font-medium text-slate-500">
-          {activeSet?.title || 'Bộ từ vựng'} · {activeSet?.terms?.length || 0} từ vựng
-        </p>
-      </div>
-    </div>
-
-    <span className="shrink-0 rounded-full bg-violet-100 px-3 py-1.5 text-xs font-bold text-violet-700">
-      ✨ Đang học
-    </span>
-  </div>
+  <ArcadeCompanion studentCode={isStudentVerified ? studentCode : ''} visible embedded studentName={isStudentVerified ? studentName : 'Bạn nhỏ'} subtitle={`${activeSet?.title || 'Bộ từ vựng'} · ${activeSet?.terms?.length || 0} từ vựng`} />
 )}
 
 {showStudentProgress ? (
@@ -4256,7 +4144,7 @@ const isCorrect = correctAnswer
 ) : !activeSet ? null : activeStudyMode === 'vocabulary-menu' ? (
       /* MODE SELECTION CARDS — ONLY INSIDE VOCABULARY PRACTICE */
        
-<div id="vocabulary-study-modes" className="space-y-6 animate-fadeIn scroll-mt-6">
+<div id="vocabulary-study-modes" className="vm-premium-menu space-y-6 animate-fadeIn scroll-mt-6">
 
   {/* Study dashboard header */}
   <div className="relative overflow-hidden rounded-[2rem] bg-gradient-to-br from-indigo-600 via-violet-600 to-fuchsia-500 p-6 text-white shadow-xl shadow-violet-200/60 sm:p-8">
@@ -4334,7 +4222,7 @@ const isCorrect = correctAnswer
     </div>
 
     <span className="rounded-full bg-violet-100 px-3 py-1.5 text-xs font-bold text-violet-700">
-      6 cách học thú vị
+      5 chế độ luyện tập
     </span>
   </div>
 
@@ -4398,7 +4286,7 @@ const isCorrect = correctAnswer
 )}
 
   {/* Learning mode cards */}
-  <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+  <div className="vm-mode-grid vm-playground-grid grid grid-cols-1 gap-4 sm:grid-cols-2">
 
 
     {/* Flashcards */}
@@ -4461,14 +4349,11 @@ const isCorrect = correctAnswer
       }}
     />
 
-    <StudyCard
-      title="Arcade Mini-games"
-      desc="Treasure Hunt, Word Café, NomNom, Word Builder, Word Fishing, Memory Flip và Sentence Runner."
-      icon={<span className="text-3xl">🎲</span>}
-      color="border-fuchsia-200 bg-gradient-to-br from-fuchsia-50 to-white hover:border-fuchsia-400"
-      onClick={() => { if (!isStudentVerified) { alert('Vui lòng xác nhận mã học sinh trước.'); return; } setActiveStudyMode('arcade-mini-games'); }}
-    />
   </div>
+  <button type="button" className="vm-arcade-banner" onClick={() => { if (!isStudentVerified) { alert('Vui lòng xác nhận mã học sinh trước.'); return; } setActiveStudyMode('arcade-mini-games'); }}>
+    <div className="vm-arcade-copy"><span className="vm-arcade-kicker">LET’S PLAY!</span><h3>Arcade Mini-games</h3><p>7 trò chơi · Khám phá, học tập và nhận thưởng.</p><span className="vm-arcade-cta">Khám phá Arcade →</span></div>
+    <div className="vm-arcade-art" aria-hidden="true"><span className="vm-arcade-controller">🎮</span><span>⭐</span><span>💎</span><span>🏆</span></div>
+  </button>
 
   {/* Student progress entry */}
   <button
@@ -4499,13 +4384,13 @@ const isCorrect = correctAnswer
       ) : activeStudyMode === 'arcade-mini-games' ? (
         <ArcadeMiniGames key={activeSet.id} activeSet={activeSet} studentCode={studentCode} onBack={() => setActiveStudyMode('vocabulary-menu')} onFinish={handleSaveScore} onOpenLegacy={(mode) => setActiveStudyMode(mode)} />
       ) : activeStudyMode === 'flashcards' ? (
-        <FlashcardMode activeSet={activeSet} onBack={() => setActiveStudyMode('vocabulary-menu')} />
+        <LearningExperience key={`${studentCode}:${activeSet.id}:flashcards`} mode="flashcards" activeSet={activeSet} studentCode={studentCode} speak={speakWord} onFinish={handleSaveScore} onBack={() => setActiveStudyMode('vocabulary-menu')} />
       ) : activeStudyMode === 'quiz' ? (
-        <QuizMode activeSet={activeSet} onFinish={handleSaveScore} onBack={() => setActiveStudyMode('vocabulary-menu')} />
+        <LearningExperience key={`${studentCode}:${activeSet.id}:quiz`} mode="quiz" activeSet={activeSet} studentCode={studentCode} speak={speakWord} onFinish={handleSaveScore} onBack={() => setActiveStudyMode('vocabulary-menu')} />
       ) : activeStudyMode === 'matching' ? (
-        <MatchingMode activeSet={activeSet} onFinish={handleSaveScore} onBack={() => setActiveStudyMode('vocabulary-menu')} />
+        <LearningExperience key={`${studentCode}:${activeSet.id}:matching`} mode="matching" activeSet={activeSet} studentCode={studentCode} speak={speakWord} onFinish={handleSaveScore} onBack={() => setActiveStudyMode('vocabulary-menu')} />
       ) : activeStudyMode === 'spelling' ? (
-        <SpellingMode activeSet={activeSet} onFinish={handleSaveScore} onBack={() => setActiveStudyMode('vocabulary-menu')} />
+        <LearningExperience key={`${studentCode}:${activeSet.id}:spelling`} mode="spelling" activeSet={activeSet} studentCode={studentCode} speak={speakWord} onFinish={handleSaveScore} onBack={() => setActiveStudyMode('vocabulary-menu')} />
       ) : activeStudyMode === 'treasure-hunt' ? (
         <TreasureHunt
           activeSet={activeSet}
@@ -5082,7 +4967,7 @@ function StudyCard({ title, desc, icon, color, onClick }) {
   return (
     <div 
       onClick={onClick}
-      className={`p-6 rounded-2xl border-2 shadow-sm hover:shadow-md transition cursor-pointer flex items-start gap-4 group ${color}`}
+      className={`vm-mode-card p-6 rounded-2xl border-2 shadow-sm hover:shadow-md transition cursor-pointer flex items-start gap-4 group ${color}`}
     >
       <div className="p-3 bg-slate-50 rounded-2xl group-hover:scale-110 transition-transform">
         {icon}
