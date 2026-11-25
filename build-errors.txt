@@ -1,0 +1,613 @@
+
+> vocabmaster@0.0.0 build
+> tsc -b && vite build
+
+src/App.tsx(22,3): error TS6133: 'Play' is declared but its value is never read.
+src/App.tsx(25,3): error TS6133: 'XCircle' is declared but its value is never read.
+src/App.tsx(31,3): error TS6133: 'Award' is declared but its value is never read.
+src/App.tsx(32,3): error TS6133: 'Clock' is declared but its value is never read.
+src/App.tsx(33,3): error TS6133: 'Star' is declared but its value is never read.
+src/App.tsx(34,3): error TS6133: 'BarChart2' is declared but its value is never read.
+src/App.tsx(35,3): error TS6133: 'BarChart3' is declared but its value is never read.
+src/App.tsx(36,3): error TS6133: 'Copy' is declared but its value is never read.
+src/App.tsx(41,3): error TS6133: 'HelpCircle' is declared but its value is never read.
+src/App.tsx(44,3): error TS6133: 'Eye' is declared but its value is never read.
+src/App.tsx(57,1): error TS6133: 'LearningAnalytics' is declared but its value is never read.
+src/App.tsx(64,3): error TS6133: 'signOut' is declared but its value is never read.
+src/App.tsx(99,22): error TS2304: Cannot find name '__app_id'.
+src/App.tsx(99,49): error TS2304: Cannot find name '__app_id'.
+src/App.tsx(100,28): error TS7006: Parameter 'type' implicitly has an 'any' type.
+src/App.tsx(102,52): error TS2551: Property 'webkitAudioContext' does not exist on type 'Window & typeof globalThis'. Did you mean 'AudioContext'?
+src/App.tsx(138,20): error TS7006: Parameter 'text' implicitly has an 'any' type.
+src/App.tsx(249,35): error TS7006: Parameter 'rawName' implicitly has an 'any' type.
+src/App.tsx(302,23): error TS2339: Property 'code' does not exist on type '{}'.
+src/App.tsx(303,26): error TS2339: Property 'message' does not exist on type '{}'.
+src/App.tsx(308,34): error TS7006: Parameter 'groupName' implicitly has an 'any' type.
+src/App.tsx(410,23): error TS2339: Property 'code' does not exist on type '{}'.
+src/App.tsx(411,26): error TS2339: Property 'message' does not exist on type '{}'.
+src/App.tsx(415,10): error TS6133: 'selectedStudent' is declared but its value is never read.
+src/App.tsx(415,27): error TS6133: 'setSelectedStudent' is declared but its value is never read.
+src/App.tsx(416,8): error TS6133: 'dateFrom' is declared but its value is never read.
+src/App.tsx(416,18): error TS6133: 'setDateFrom' is declared but its value is never read.
+src/App.tsx(417,8): error TS6133: 'dateTo' is declared but its value is never read.
+src/App.tsx(417,16): error TS6133: 'setDateTo' is declared but its value is never read.
+src/App.tsx(418,8): error TS6133: 'selectedResultIds' is declared but its value is never read.
+src/App.tsx(418,27): error TS6133: 'setSelectedResultIds' is declared but its value is never read.
+src/App.tsx(464,17): error TS2345: Argument of type '{ id: string; }[]' is not assignable to parameter of type 'SetStateAction<never[]>'.
+  Type '{ id: string; }[]' is not assignable to type 'never[]'.
+    Type '{ id: string; }' is not assignable to type 'never'.
+src/App.tsx(478,41): error TS7006: Parameter 'e' implicitly has an 'any' type.
+src/App.tsx(504,19): error TS2769: No overload matches this call.
+  Overload 1 of 2, '(o: {}): string[]', gave the following error.
+    Argument of type 'unknown' is not assignable to parameter of type '{}'.
+  Overload 2 of 2, '(o: object): string[]', gave the following error.
+    Argument of type 'unknown' is not assignable to parameter of type 'object'.
+src/App.tsx(505,9): error TS7053: Element implicitly has an 'any' type because expression of type 'string' can't be used to index type '{}'.
+  No index signature with a parameter of type 'string' was found on type '{}'.
+src/App.tsx(507,20): error TS18046: 'row' is of type 'unknown'.
+src/App.tsx(513,11): error TS7053: Element implicitly has an 'any' type because expression of type '"mã học sinh"' can't be used to index type '{}'.
+  Property 'mã học sinh' does not exist on type '{}'.
+src/App.tsx(514,11): error TS7053: Element implicitly has an 'any' type because expression of type '"ma hoc sinh"' can't be used to index type '{}'.
+  Property 'ma hoc sinh' does not exist on type '{}'.
+src/App.tsx(515,11): error TS7053: Element implicitly has an 'any' type because expression of type '"code"' can't be used to index type '{}'.
+  Property 'code' does not exist on type '{}'.
+src/App.tsx(516,11): error TS7053: Element implicitly has an 'any' type because expression of type '"studentcode"' can't be used to index type '{}'.
+  Property 'studentcode' does not exist on type '{}'.
+src/App.tsx(519,11): error TS7053: Element implicitly has an 'any' type because expression of type '"họ và tên"' can't be used to index type '{}'.
+  Property 'họ và tên' does not exist on type '{}'.
+src/App.tsx(520,11): error TS7053: Element implicitly has an 'any' type because expression of type '"ho va ten"' can't be used to index type '{}'.
+  Property 'ho va ten' does not exist on type '{}'.
+src/App.tsx(521,11): error TS7053: Element implicitly has an 'any' type because expression of type '"họ tên"' can't be used to index type '{}'.
+  Property 'họ tên' does not exist on type '{}'.
+src/App.tsx(522,11): error TS7053: Element implicitly has an 'any' type because expression of type '"ho ten"' can't be used to index type '{}'.
+  Property 'ho ten' does not exist on type '{}'.
+src/App.tsx(523,11): error TS7053: Element implicitly has an 'any' type because expression of type '"name"' can't be used to index type '{}'.
+  Property 'name' does not exist on type '{}'.
+src/App.tsx(526,11): error TS7053: Element implicitly has an 'any' type because expression of type '"lớp"' can't be used to index type '{}'.
+  Property 'lớp' does not exist on type '{}'.
+src/App.tsx(527,11): error TS7053: Element implicitly has an 'any' type because expression of type '"lop"' can't be used to index type '{}'.
+  Property 'lop' does not exist on type '{}'.
+src/App.tsx(528,11): error TS7053: Element implicitly has an 'any' type because expression of type '"class"' can't be used to index type '{}'.
+  Property 'class' does not exist on type '{}'.
+src/App.tsx(529,11): error TS7053: Element implicitly has an 'any' type because expression of type '"classname"' can't be used to index type '{}'.
+  Property 'classname' does not exist on type '{}'.
+src/App.tsx(532,11): error TS7053: Element implicitly has an 'any' type because expression of type '"stage"' can't be used to index type '{}'.
+  Property 'stage' does not exist on type '{}'.
+src/App.tsx(532,37): error TS7053: Element implicitly has an 'any' type because expression of type '"stages"' can't be used to index type '{}'.
+  Property 'stages' does not exist on type '{}'.
+src/App.tsx(533,11): error TS7053: Element implicitly has an 'any' type because expression of type '"stage(s)"' can't be used to index type '{}'.
+  Property 'stage(s)' does not exist on type '{}'.
+src/App.tsx(533,40): error TS7053: Element implicitly has an 'any' type because expression of type '"giai đoạn"' can't be used to index type '{}'.
+  Property 'giai đoạn' does not exist on type '{}'.
+src/App.tsx(534,11): error TS7053: Element implicitly has an 'any' type because expression of type '"giai doan"' can't be used to index type '{}'.
+  Property 'giai doan' does not exist on type '{}'.
+src/App.tsx(553,25): error TS2345: Argument of type '{ rowNumber: number; code: any; name: any; className: any; stages: string[]; }[]' is not assignable to parameter of type 'SetStateAction<never[]>'.
+  Type '{ rowNumber: number; code: any; name: any; className: any; stages: string[]; }[]' is not assignable to type 'never[]'.
+    Type '{ rowNumber: number; code: any; name: any; className: any; stages: string[]; }' is not assignable to type 'never'.
+src/App.tsx(588,35): error TS2339: Property 'code' does not exist on type 'never'.
+src/App.tsx(604,30): error TS2339: Property 'name' does not exist on type 'never'.
+src/App.tsx(605,35): error TS2339: Property 'className' does not exist on type 'never'.
+src/App.tsx(606,39): error TS2339: Property 'stages' does not exist on type 'never'.
+src/App.tsx(606,57): error TS2339: Property 'stages' does not exist on type 'never'.
+src/App.tsx(606,72): error TS7006: Parameter 'stage' implicitly has an 'any' type.
+src/App.tsx(618,7): error TS2345: Argument of type '{ id: string; }[]' is not assignable to parameter of type 'SetStateAction<never[]>'.
+  Type '{ id: string; }[]' is not assignable to type 'never[]'.
+    Type '{ id: string; }' is not assignable to type 'never'.
+src/App.tsx(640,42): error TS7006: Parameter 'e' implicitly has an 'any' type.
+src/App.tsx(674,9): error TS2345: Argument of type '{ id: string; }[]' is not assignable to parameter of type 'SetStateAction<never[]>'.
+  Type '{ id: string; }[]' is not assignable to type 'never[]'.
+    Type '{ id: string; }' is not assignable to type 'never'.
+src/App.tsx(694,36): error TS7006: Parameter 'student' implicitly has an 'any' type.
+src/App.tsx(703,44): error TS7006: Parameter 'code' implicitly has an 'any' type.
+src/App.tsx(711,52): error TS2339: Property 'id' does not exist on type 'never'.
+src/App.tsx(720,10): error TS6133: 'showStudentProgress' is declared but its value is never read.
+src/App.tsx(720,31): error TS6133: 'setShowStudentProgress' is declared but its value is never read.
+src/App.tsx(722,10): error TS6133: 'resumePrompt' is declared but its value is never read.
+src/App.tsx(722,24): error TS6133: 'setResumePrompt' is declared but its value is never read.
+src/App.tsx(727,9): error TS6133: 'saveVocabularyProgress' is declared but its value is never read.
+src/App.tsx(748,7): error TS6133: 'getVocabularyProgress' is declared but its value is never read.
+src/App.tsx(763,7): error TS6133: 'clearVocabularyProgress' is declared but its value is never read.
+src/App.tsx(866,37): error TS7006: Parameter 'e' implicitly has an 'any' type.
+src/App.tsx(889,18): error TS2304: Cannot find name '__initial_auth_token'.
+src/App.tsx(889,58): error TS2304: Cannot find name '__initial_auth_token'.
+src/App.tsx(890,43): error TS2304: Cannot find name '__initial_auth_token'.
+src/App.tsx(902,13): error TS2345: Argument of type 'User | null' is not assignable to parameter of type 'SetStateAction<null>'.
+  Type 'User' is not assignable to type 'SetStateAction<null>'.
+    Type 'User' provides no match for the signature '(prevState: null): null'.
+src/App.tsx(965,13): error TS7034: Variable 'testsData' implicitly has type 'any[]' in some locations where its type cannot be determined.
+src/App.tsx(974,21): error TS2345: Argument of type 'any[]' is not assignable to parameter of type 'SetStateAction<never[]>'.
+  Type 'any[]' is not assignable to type 'never[]'.
+    Type 'any' is not assignable to type 'never'.
+src/App.tsx(974,21): error TS7005: Variable 'testsData' implicitly has an 'any[]' type.
+src/App.tsx(995,13): error TS7034: Variable 'resultsData' implicitly has type 'any[]' in some locations where its type cannot be determined.
+src/App.tsx(1004,27): error TS2345: Argument of type 'any[]' is not assignable to parameter of type 'SetStateAction<never[]>'.
+  Type 'any[]' is not assignable to type 'never[]'.
+    Type 'any' is not assignable to type 'never'.
+src/App.tsx(1004,27): error TS7005: Variable 'resultsData' implicitly has an 'any[]' type.
+src/App.tsx(1013,13): error TS7034: Variable 'setsData' implicitly has type 'any[]' in some locations where its type cannot be determined.
+src/App.tsx(1022,15): error TS2345: Argument of type 'any[]' is not assignable to parameter of type 'SetStateAction<never[]>'.
+  Type 'any[]' is not assignable to type 'never[]'.
+    Type 'any' is not assignable to type 'never'.
+src/App.tsx(1022,15): error TS7005: Variable 'setsData' implicitly has an 'any[]' type.
+src/App.tsx(1029,26): error TS7005: Variable 'setsData' implicitly has an 'any[]' type.
+src/App.tsx(1056,15): error TS7034: Variable 'resultsData' implicitly has type 'any[]' in some locations where its type cannot be determined.
+src/App.tsx(1066,9): error TS7005: Variable 'resultsData' implicitly has an 'any[]' type.
+src/App.tsx(1068,13): error TS2362: The left-hand side of an arithmetic operation must be of type 'any', 'number', 'bigint' or an enum type.
+src/App.tsx(1069,13): error TS2363: The right-hand side of an arithmetic operation must be of type 'any', 'number', 'bigint' or an enum type.
+src/App.tsx(1072,20): error TS2345: Argument of type 'any[]' is not assignable to parameter of type 'SetStateAction<never[]>'.
+  Type 'any[]' is not assignable to type 'never[]'.
+    Type 'any' is not assignable to type 'never'.
+src/App.tsx(1072,20): error TS7005: Variable 'resultsData' implicitly has an 'any[]' type.
+src/App.tsx(1100,14): error TS2339: Property 'groups' does not exist on type 'never'.
+src/App.tsx(1100,34): error TS7006: Parameter 'group' implicitly has an 'any' type.
+src/App.tsx(1101,34): error TS2345: Argument of type 'any' is not assignable to parameter of type 'never'.
+src/App.tsx(1107,29): error TS2339: Property 'id' does not exist on type 'never'.
+src/App.tsx(1110,35): error TS7006: Parameter 'event' implicitly has an 'any' type.
+src/App.tsx(1122,35): error TS18047: 'e.target' is possibly 'null'.
+src/App.tsx(1122,35): error TS2769: No overload matches this call.
+  The last overload gave the following error.
+    Argument of type 'string | ArrayBuffer | null' is not assignable to parameter of type 'ArrayBuffer | ArrayLike<number>'.
+      Type 'null' is not assignable to type 'ArrayBuffer | ArrayLike<number>'.
+src/App.tsx(1146,26): error TS2769: No overload matches this call.
+  Overload 1 of 2, '(o: ArrayLike<unknown> | { [s: string]: unknown; }): [string, unknown][]', gave the following error.
+    Argument of type 'unknown' is not assignable to parameter of type 'ArrayLike<unknown> | { [s: string]: unknown; }'.
+  Overload 2 of 2, '(o: {}): [string, any][]', gave the following error.
+    Argument of type 'unknown' is not assignable to parameter of type '{}'.
+src/App.tsx(1154,13): error TS7053: Element implicitly has an 'any' type because expression of type 'string' can't be used to index type '{}'.
+  No index signature with a parameter of type 'string' was found on type '{}'.
+src/App.tsx(1160,13): error TS7053: Element implicitly has an 'any' type because expression of type '"tu"' can't be used to index type '{}'.
+  Property 'tu' does not exist on type '{}'.
+src/App.tsx(1161,13): error TS7053: Element implicitly has an 'any' type because expression of type '"tuvung"' can't be used to index type '{}'.
+  Property 'tuvung' does not exist on type '{}'.
+src/App.tsx(1162,13): error TS7053: Element implicitly has an 'any' type because expression of type '"vocabulary"' can't be used to index type '{}'.
+  Property 'vocabulary' does not exist on type '{}'.
+src/App.tsx(1163,13): error TS7053: Element implicitly has an 'any' type because expression of type '"term"' can't be used to index type '{}'.
+  Property 'term' does not exist on type '{}'.
+src/App.tsx(1167,13): error TS7053: Element implicitly has an 'any' type because expression of type '"nghiatv"' can't be used to index type '{}'.
+  Property 'nghiatv' does not exist on type '{}'.
+src/App.tsx(1168,13): error TS7053: Element implicitly has an 'any' type because expression of type '"nghiatiengviet"' can't be used to index type '{}'.
+  Property 'nghiatiengviet' does not exist on type '{}'.
+src/App.tsx(1169,13): error TS7053: Element implicitly has an 'any' type because expression of type '"meaning"' can't be used to index type '{}'.
+  Property 'meaning' does not exist on type '{}'.
+src/App.tsx(1170,13): error TS7053: Element implicitly has an 'any' type because expression of type '"vietnamesemeaning"' can't be used to index type '{}'.
+  Property 'vietnamesemeaning' does not exist on type '{}'.
+src/App.tsx(1174,13): error TS7053: Element implicitly has an 'any' type because expression of type '"vidu"' can't be used to index type '{}'.
+  Property 'vidu' does not exist on type '{}'.
+src/App.tsx(1175,13): error TS7053: Element implicitly has an 'any' type because expression of type '"example"' can't be used to index type '{}'.
+  Property 'example' does not exist on type '{}'.
+src/App.tsx(1193,24): error TS2345: Argument of type '{ id: string; term: any; meaning: any; example: any; }[]' is not assignable to parameter of type 'SetStateAction<never[]>'.
+  Type '{ id: string; term: any; meaning: any; example: any; }[]' is not assignable to type 'never[]'.
+    Type '{ id: string; term: any; meaning: any; example: any; }' is not assignable to type 'never'.
+src/App.tsx(1200,9): error TS18046: 'error' is of type 'unknown'.
+src/App.tsx(1223,38): error TS7006: Parameter 'termId' implicitly has an 'any' type.
+src/App.tsx(1223,46): error TS7006: Parameter 'file' implicitly has an 'any' type.
+src/App.tsx(1239,22): error TS2304: Cannot find name 'ref'.
+src/App.tsx(1240,7): error TS2552: Cannot find name 'storage'. Did you mean 'Storage'?
+src/App.tsx(1241,29): error TS2339: Property 'uid' does not exist on type 'never'.
+src/App.tsx(1244,11): error TS2304: Cannot find name 'uploadBytes'.
+src/App.tsx(1246,28): error TS2304: Cannot find name 'getDownloadURL'.
+src/App.tsx(1260,29): error TS7006: Parameter 'id' implicitly has an 'any' type.
+src/App.tsx(1260,33): error TS7006: Parameter 'field' implicitly has an 'any' type.
+src/App.tsx(1260,40): error TS7006: Parameter 'value' implicitly has an 'any' type.
+src/App.tsx(1264,32): error TS7006: Parameter 'id' implicitly has an 'any' type.
+src/App.tsx(1272,32): error TS7006: Parameter 'e' implicitly has an 'any' type.
+src/App.tsx(1307,17): error TS2739: Type '{ id: string; term: string; example: string; }' is missing the following properties from type '{ id: string; term: string; meaning: string; example: string; imageUrl: string; }': meaning, imageUrl
+src/App.tsx(1314,19): error TS2339: Property 'code' does not exist on type '{}'.
+src/App.tsx(1315,22): error TS2339: Property 'message' does not exist on type '{}'.
+src/App.tsx(1320,31): error TS7006: Parameter 'vocabSet' implicitly has an 'any' type.
+src/App.tsx(1330,34): error TS7006: Parameter 'setId' implicitly has an 'any' type.
+src/App.tsx(1343,34): error TS7006: Parameter 'scoreData' implicitly has an 'any' type.
+src/App.tsx(1354,57): error TS2339: Property 'id' does not exist on type 'never'.
+src/App.tsx(1369,17): error TS2339: Property 'id' does not exist on type 'never'.
+src/App.tsx(1401,26): error TS2339: Property 'id' does not exist on type 'never'.
+src/App.tsx(1402,29): error TS2339: Property 'title' does not exist on type 'never'.
+src/App.tsx(1548,3): error TS2322: Type '{ db: Firestore; appId: any; sets: never[]; selectedSetId: string; setSelectedSetId: Dispatch<SetStateAction<string>>; results: never[]; vocabTests: never[]; ... 55 more ...; handleImportRosterStudents: () => Promise<...>; }' is not assignable to type 'IntrinsicAttributes & { db: any; appId: any; sets: any; selectedSetId: any; setSelectedSetId: any; results: any; vocabTests: any; vocabTestResults: any; isCreatingSet: any; ... 51 more ...; handleImportRosterStudents: any; }'.
+  Property 'vocabImportError' does not exist on type 'IntrinsicAttributes & { db: any; appId: any; sets: any; selectedSetId: any; setSelectedSetId: any; results: any; vocabTests: any; vocabTestResults: any; isCreatingSet: any; ... 51 more ...; handleImportRosterStudents: any; }'. Did you mean 'VocabImportError'?
+src/App.tsx(1584,13): error TS2322: Type 'string[]' is not assignable to type 'never[]'.
+  Type 'string' is not assignable to type 'never'.
+src/App.tsx(1619,3): error TS7031: Binding element 'teacherEmail' implicitly has an 'any' type.
+src/App.tsx(1620,3): error TS7031: Binding element 'setTeacherEmail' implicitly has an 'any' type.
+src/App.tsx(1621,3): error TS7031: Binding element 'teacherPassword' implicitly has an 'any' type.
+src/App.tsx(1622,3): error TS7031: Binding element 'setTeacherPassword' implicitly has an 'any' type.
+src/App.tsx(1623,3): error TS7031: Binding element 'teacherLoginError' implicitly has an 'any' type.
+src/App.tsx(1624,3): error TS7031: Binding element 'handleTeacherLogin' implicitly has an 'any' type.
+src/App.tsx(1625,3): error TS7031: Binding element 'setMode' implicitly has an 'any' type.
+src/App.tsx(1627,9): error TS6133: 'handleToggleResult' is declared but its value is never read.
+src/App.tsx(1628,3): error TS2304: Cannot find name 'setSelectedResultIds'.
+src/App.tsx(1628,25): error TS7006: Parameter 'prev' implicitly has an 'any' type.
+src/App.tsx(1630,22): error TS7006: Parameter 'id' implicitly has an 'any' type.
+src/App.tsx(1635,7): error TS6133: 'handleDeleteSelectedResults' is declared but its value is never read.
+src/App.tsx(1636,7): error TS2304: Cannot find name 'selectedResultIds'.
+src/App.tsx(1642,29): error TS2304: Cannot find name 'selectedResultIds'.
+src/App.tsx(1649,7): error TS2304: Cannot find name 'selectedResultIds'.
+src/App.tsx(1649,30): error TS7006: Parameter 'resultId' implicitly has an 'any' type.
+src/App.tsx(1664,5): error TS2304: Cannot find name 'setSelectedResultIds'.
+src/App.tsx(1738,15): error TS2304: Cannot find name 'setTeacherLoginError'.
+src/App.tsx(1751,3): error TS7031: Binding element 'db' implicitly has an 'any' type.
+src/App.tsx(1752,3): error TS7031: Binding element 'appId' implicitly has an 'any' type.
+src/App.tsx(1753,3): error TS7031: Binding element 'sets' implicitly has an 'any' type.
+src/App.tsx(1754,3): error TS7031: Binding element 'selectedSetId' implicitly has an 'any' type.
+src/App.tsx(1755,3): error TS7031: Binding element 'setSelectedSetId' implicitly has an 'any' type.
+src/App.tsx(1756,3): error TS7031: Binding element 'results' implicitly has an 'any' type.
+src/App.tsx(1757,3): error TS7031: Binding element 'vocabTests' implicitly has an 'any' type.
+src/App.tsx(1758,3): error TS7031: Binding element 'vocabTestResults' implicitly has an 'any' type.
+src/App.tsx(1759,3): error TS7031: Binding element 'isCreatingSet' implicitly has an 'any' type.
+src/App.tsx(1760,3): error TS7031: Binding element 'setIsCreatingSet' implicitly has an 'any' type.
+src/App.tsx(1761,3): error TS7031: Binding element 'setTitle' implicitly has an 'any' type.
+src/App.tsx(1762,3): error TS7031: Binding element 'setSetTitle' implicitly has an 'any' type.
+src/App.tsx(1763,3): error TS7031: Binding element 'setDescription' implicitly has an 'any' type.
+src/App.tsx(1764,3): error TS7031: Binding element 'setSetDescription' implicitly has an 'any' type.
+src/App.tsx(1765,3): error TS7031: Binding element 'setGroups' implicitly has an 'any' type.
+src/App.tsx(1766,3): error TS7031: Binding element 'setSetGroups' implicitly has an 'any' type.
+src/App.tsx(1767,3): error TS7031: Binding element 'groupOptions' implicitly has an 'any' type.
+src/App.tsx(1768,3): error TS7031: Binding element 'handleAddGroupName' implicitly has an 'any' type.
+src/App.tsx(1769,3): error TS7031: Binding element 'newGroupName' implicitly has an 'any' type.
+src/App.tsx(1770,3): error TS7031: Binding element 'setNewGroupName' implicitly has an 'any' type.
+src/App.tsx(1771,3): error TS7031: Binding element 'handleAddGroup' implicitly has an 'any' type.
+src/App.tsx(1772,3): error TS7031: Binding element 'handleDeleteGroup' implicitly has an 'any' type.
+src/App.tsx(1773,3): error TS7031: Binding element 'terms' implicitly has an 'any' type.
+src/App.tsx(1774,3): error TS7031: Binding element 'setTerms' implicitly has an 'any' type.
+src/App.tsx(1775,3): error TS7031: Binding element 'handleAddTermRow' implicitly has an 'any' type.
+src/App.tsx(1776,3): error TS7031: Binding element 'handleTermChange' implicitly has an 'any' type.
+src/App.tsx(1777,3): error TS7031: Binding element 'handleRemoveTermRow' implicitly has an 'any' type.
+src/App.tsx(1778,3): error TS7031: Binding element 'handleTermImageUpload' implicitly has an 'any' type.
+src/App.tsx(1779,3): error TS7031: Binding element 'handleSaveSet' implicitly has an 'any' type.
+src/App.tsx(1780,3): error TS7031: Binding element 'handleStartEditSet' implicitly has an 'any' type.
+src/App.tsx(1781,3): error TS7031: Binding element 'handleDeleteSet' implicitly has an 'any' type.
+src/App.tsx(1782,5): error TS7031: Binding element 'handleVocabularyImport' implicitly has an 'any' type.
+src/App.tsx(1783,3): error TS7031: Binding element 'isImportingVocabulary' implicitly has an 'any' type.
+src/App.tsx(1784,3): error TS7031: Binding element 'setIsImportingVocabulary' implicitly has an 'any' type.
+src/App.tsx(1785,3): error TS7031: Binding element 'importedTerms' implicitly has an 'any' type.
+src/App.tsx(1786,3): error TS7031: Binding element 'setImportedTerms' implicitly has an 'any' type.
+src/App.tsx(1787,5): error TS7031: Binding element 'VocabImportError' implicitly has an 'any' type.
+src/App.tsx(1788,5): error TS7031: Binding element 'setVocabImportError' implicitly has an 'any' type.
+src/App.tsx(1789,3): error TS7031: Binding element 'copyShareLink' implicitly has an 'any' type.
+src/App.tsx(1790,3): error TS7031: Binding element 'copiedLink' implicitly has an 'any' type.
+src/App.tsx(1791,5): error TS7031: Binding element 'testEnabled' implicitly has an 'any' type.
+src/App.tsx(1792,3): error TS7031: Binding element 'setTestEnabled' implicitly has an 'any' type.
+src/App.tsx(1795,3): error TS7031: Binding element 'roster' implicitly has an 'any' type.
+src/App.tsx(1796,3): error TS7031: Binding element 'rosterName' implicitly has an 'any' type.
+src/App.tsx(1797,3): error TS7031: Binding element 'setRosterName' implicitly has an 'any' type.
+src/App.tsx(1798,3): error TS7031: Binding element 'rosterCode' implicitly has an 'any' type.
+src/App.tsx(1799,3): error TS7031: Binding element 'setRosterCode' implicitly has an 'any' type.
+src/App.tsx(1800,3): error TS7031: Binding element 'rosterClass' implicitly has an 'any' type.
+src/App.tsx(1801,3): error TS7031: Binding element 'setRosterClass' implicitly has an 'any' type.
+src/App.tsx(1802,3): error TS7031: Binding element 'rosterStages' implicitly has an 'any' type.
+src/App.tsx(1803,1): error TS7031: Binding element 'setRosterStages' implicitly has an 'any' type.
+src/App.tsx(1804,3): error TS7031: Binding element 'editingRosterCode' implicitly has an 'any' type.
+src/App.tsx(1805,3): error TS7031: Binding element 'setEditingRosterCode' implicitly has an 'any' type.
+src/App.tsx(1806,3): error TS7031: Binding element 'handleSaveRosterStudent' implicitly has an 'any' type.
+src/App.tsx(1807,3): error TS7031: Binding element 'handleEditRosterStudent' implicitly has an 'any' type.
+src/App.tsx(1808,3): error TS7031: Binding element 'handleDeleteRosterStudent' implicitly has an 'any' type.
+src/App.tsx(1809,3): error TS7031: Binding element 'importedStudents' implicitly has an 'any' type.
+src/App.tsx(1810,3): error TS7031: Binding element 'setImportedStudents' implicitly has an 'any' type.
+src/App.tsx(1811,3): error TS7031: Binding element 'isImporting' implicitly has an 'any' type.
+src/App.tsx(1812,3): error TS7031: Binding element 'handleRosterFileChange' implicitly has an 'any' type.
+src/App.tsx(1813,3): error TS7031: Binding element 'handleImportRosterStudents' implicitly has an 'any' type.
+src/App.tsx(1851,14): error TS7006: Parameter 'set' implicitly has an 'any' type.
+src/App.tsx(1852,14): error TS7006: Parameter 'set' implicitly has an 'any' type.
+src/App.tsx(1855,48): error TS7006: Parameter 'term' implicitly has an 'any' type.
+src/App.tsx(1858,12): error TS7006: Parameter 'a' implicitly has an 'any' type.
+src/App.tsx(1858,15): error TS7006: Parameter 'b' implicitly has an 'any' type.
+src/App.tsx(1872,31): error TS7006: Parameter 's' implicitly has an 'any' type.
+src/App.tsx(1874,59): error TS7006: Parameter 'r' implicitly has an 'any' type.
+src/App.tsx(1881,77): error TS7006: Parameter 'acc' implicitly has an 'any' type.
+src/App.tsx(1881,82): error TS7006: Parameter 'r' implicitly has an 'any' type.
+src/App.tsx(1889,23): error TS2698: Spread types may only be created from object types.
+src/App.tsx(1889,49): error TS18046: 's' is of type 'unknown'.
+src/App.tsx(1889,66): error TS18046: 's' is of type 'unknown'.
+src/App.tsx(1890,104): error TS7006: Parameter 'sum' implicitly has an 'any' type.
+src/App.tsx(1890,109): error TS7006: Parameter 'r' implicitly has an 'any' type.
+src/App.tsx(1891,60): error TS7006: Parameter 'r' implicitly has an 'any' type.
+src/App.tsx(1892,59): error TS7006: Parameter 'r' implicitly has an 'any' type.
+src/App.tsx(1894,47): error TS7006: Parameter 'test' implicitly has an 'any' type.
+src/App.tsx(1896,26): error TS7006: Parameter 'item' implicitly has an 'any' type.
+src/App.tsx(1905,57): error TS7006: Parameter 'group' implicitly has an 'any' type.
+src/App.tsx(1917,38): error TS7006: Parameter 'event' implicitly has an 'any' type.
+src/App.tsx(1931,24): error TS7006: Parameter 'value' implicitly has an 'any' type.
+src/App.tsx(1934,22): error TS2769: No overload matches this call.
+  Overload 1 of 2, '(o: ArrayLike<unknown> | { [s: string]: unknown; }): [string, unknown][]', gave the following error.
+    Argument of type 'unknown' is not assignable to parameter of type 'ArrayLike<unknown> | { [s: string]: unknown; }'.
+  Overload 2 of 2, '(o: {}): [string, any][]', gave the following error.
+    Argument of type 'unknown' is not assignable to parameter of type '{}'.
+src/App.tsx(1934,55): error TS7053: Element implicitly has an 'any' type because expression of type 'string' can't be used to index type '{}'.
+  No index signature with a parameter of type 'string' was found on type '{}'.
+src/App.tsx(1935,20): error TS7019: Rest parameter 'keys' implicitly has an 'any[]' type.
+src/App.tsx(1936,37): error TS7053: Element implicitly has an 'any' type because expression of type 'string' can't be used to index type '{}'.
+  No index signature with a parameter of type 'string' was found on type '{}'.
+src/App.tsx(1936,66): error TS7053: Element implicitly has an 'any' type because expression of type 'string' can't be used to index type '{}'.
+  No index signature with a parameter of type 'string' was found on type '{}'.
+src/App.tsx(1951,11): error TS7034: Variable 'errors' implicitly has type 'any[]' in some locations where its type cannot be determined.
+src/App.tsx(1952,11): error TS7034: Variable 'questions' implicitly has type 'any[]' in some locations where its type cannot be determined.
+src/App.tsx(1963,41): error TS7005: Variable 'errors' implicitly has an 'any[]' type.
+src/App.tsx(1967,98): error TS7005: Variable 'errors' implicitly has an 'any[]' type.
+src/App.tsx(1969,22): error TS2345: Argument of type 'any[]' is not assignable to parameter of type 'SetStateAction<never[]>'.
+  Type 'any[]' is not assignable to type 'never[]'.
+    Type 'any' is not assignable to type 'never'.
+src/App.tsx(1969,22): error TS7005: Variable 'questions' implicitly has an 'any[]' type.
+src/App.tsx(2008,22): error TS2345: Argument of type '(previous: never[]) => { type: string; prompt: string; options: string[]; answer: string; }[]' is not assignable to parameter of type 'SetStateAction<never[]>'.
+  Type '(previous: never[]) => { type: string; prompt: string; options: string[]; answer: string; }[]' is not assignable to type '(prevState: never[]) => never[]'.
+    Type '{ type: string; prompt: string; options: string[]; answer: string; }[]' is not assignable to type 'never[]'.
+      Type '{ type: string; prompt: string; options: string[]; answer: string; }' is not assignable to type 'never'.
+src/App.tsx(2011,22): error TS2345: Argument of type '(previous: never[]) => { type: string; prompt: string; options: string[]; answer: string; }[]' is not assignable to parameter of type 'SetStateAction<never[]>'.
+  Type '(previous: never[]) => { type: string; prompt: string; options: string[]; answer: string; }[]' is not assignable to type '(prevState: never[]) => never[]'.
+    Type '{ type: string; prompt: string; options: string[]; answer: string; }[]' is not assignable to type 'never[]'.
+      Type '{ type: string; prompt: string; options: string[]; answer: string; }' is not assignable to type 'never'.
+src/App.tsx(2018,33): error TS7006: Parameter 'index' implicitly has an 'any' type.
+src/App.tsx(2021,32): error TS2339: Property 'type' does not exist on type 'never'.
+src/App.tsx(2022,34): error TS2339: Property 'prompt' does not exist on type 'never'.
+src/App.tsx(2023,35): error TS2339: Property 'options' does not exist on type 'never'.
+src/App.tsx(2023,66): error TS2339: Property 'options' does not exist on type 'never'.
+src/App.tsx(2024,34): error TS2339: Property 'answer' does not exist on type 'never'.
+src/App.tsx(2028,25): error TS7006: Parameter 'test' implicitly has an 'any' type.
+src/App.tsx(2034,71): error TS7006: Parameter 'q' implicitly has an 'any' type.
+src/App.tsx(2045,31): error TS7006: Parameter 'set' implicitly has an 'any' type.
+src/App.tsx(2102,33): error TS7006: Parameter 'test' implicitly has an 'any' type.
+src/App.tsx(2130,41): error TS7006: Parameter 'r' implicitly has an 'any' type.
+src/App.tsx(2305,24): error TS7006: Parameter 'group' implicitly has an 'any' type.
+src/App.tsx(2325,35): error TS7006: Parameter 'item' implicitly has an 'any' type.
+src/App.tsx(2447,44): error TS7006: Parameter 'item' implicitly has an 'any' type.
+src/App.tsx(2474,19): error TS7006: Parameter 'prev' implicitly has an 'any' type.
+src/App.tsx(2484,27): error TS7006: Parameter 'item' implicitly has an 'any' type.
+src/App.tsx(2484,33): error TS7006: Parameter 'index' implicitly has an 'any' type.
+src/App.tsx(2737,20): error TS7006: Parameter 'set' implicitly has an 'any' type.
+src/App.tsx(2738,17): error TS7006: Parameter 'set' implicitly has an 'any' type.
+src/App.tsx(2860,44): error TS2339: Property 'prompt' does not exist on type 'never'.
+src/App.tsx(2862,122): error TS2339: Property 'type' does not exist on type 'never'.
+src/App.tsx(2862,164): error TS2339: Property 'type' does not exist on type 'never'.
+src/App.tsx(2862,203): error TS2339: Property 'type' does not exist on type 'never'.
+src/App.tsx(2863,93): error TS2339: Property 'prompt' does not exist on type 'never'.
+src/App.tsx(2867,27): error TS2339: Property 'type' does not exist on type 'never'.
+src/App.tsx(2867,54): error TS2339: Property 'options' does not exist on type 'never'.
+src/App.tsx(2869,31): error TS2339: Property 'options' does not exist on type 'never'.
+src/App.tsx(2869,44): error TS7006: Parameter 'option' implicitly has an 'any' type.
+src/App.tsx(2869,52): error TS7006: Parameter 'optionIndex' implicitly has an 'any' type.
+src/App.tsx(2870,159): error TS2339: Property 'answer' does not exist on type 'never'.
+src/App.tsx(2873,46): error TS2339: Property 'answer' does not exist on type 'never'.
+src/App.tsx(2881,156): error TS2339: Property 'answer' does not exist on type 'never'.
+src/App.tsx(2922,75): error TS7006: Parameter 'group' implicitly has an 'any' type.
+src/App.tsx(2934,74): error TS7006: Parameter 'test' implicitly has an 'any' type.
+src/App.tsx(2935,34): error TS7006: Parameter 'item' implicitly has an 'any' type.
+src/App.tsx(2956,224): error TS7006: Parameter 't' implicitly has an 'any' type.
+src/App.tsx(2957,236): error TS2322: Type 'unknown' is not assignable to type 'Key | null | undefined'.
+src/App.tsx(2957,244): error TS2322: Type 'unknown' is not assignable to type 'string | number | readonly string[] | undefined'.
+src/App.tsx(2957,254): error TS2322: Type 'unknown' is not assignable to type 'ReactNode'.
+src/App.tsx(3146,30): error TS7006: Parameter 'group' implicitly has an 'any' type.
+src/App.tsx(3169,29): error TS7006: Parameter 's' implicitly has an 'any' type.
+src/App.tsx(3179,109): error TS7006: Parameter 'group' implicitly has an 'any' type.
+src/App.tsx(3229,19): error TS7006: Parameter 's' implicitly has an 'any' type.
+src/App.tsx(3247,23): error TS7006: Parameter 'r' implicitly has an 'any' type.
+src/App.tsx(3252,24): error TS18046: 'student' is of type 'unknown'.
+src/App.tsx(3252,45): error TS18046: 'student' is of type 'unknown'.
+src/App.tsx(3253,14): error TS18046: 'student' is of type 'unknown'.
+src/App.tsx(3253,30): error TS18046: 'student' is of type 'unknown'.
+src/App.tsx(3408,29): error TS2322: Type 'string' is not assignable to type 'number'.
+src/App.tsx(3413,44): error TS7006: Parameter 'r' implicitly has an 'any' type.
+src/App.tsx(3413,47): error TS7006: Parameter 'idx' implicitly has an 'any' type.
+src/App.tsx(3581,49): error TS7006: Parameter 'student' implicitly has an 'any' type.
+src/App.tsx(3581,58): error TS7006: Parameter 'index' implicitly has an 'any' type.
+src/App.tsx(3640,24): error TS7006: Parameter 'group' implicitly has an 'any' type.
+src/App.tsx(3651,24): error TS7006: Parameter 'prev' implicitly has an 'any' type.
+src/App.tsx(3653,24): error TS7006: Parameter 'prev' implicitly has an 'any' type.
+src/App.tsx(3654,22): error TS7006: Parameter 'item' implicitly has an 'any' type.
+src/App.tsx(3798,34): error TS7006: Parameter 'a' implicitly has an 'any' type.
+src/App.tsx(3798,37): error TS7006: Parameter 'b' implicitly has an 'any' type.
+src/App.tsx(3806,33): error TS7006: Parameter 'student' implicitly has an 'any' type.
+src/App.tsx(3845,29): error TS7006: Parameter 'stage' implicitly has an 'any' type.
+src/App.tsx(3899,3): error TS7031: Binding element 'db' implicitly has an 'any' type.
+src/App.tsx(3900,3): error TS7031: Binding element 'appId' implicitly has an 'any' type.
+src/App.tsx(3903,3): error TS7031: Binding element 'sets' implicitly has an 'any' type.
+src/App.tsx(3904,3): error TS7031: Binding element 'vocabTests' implicitly has an 'any' type.
+src/App.tsx(3905,3): error TS6133: 'selectedSetId' is declared but its value is never read.
+src/App.tsx(3905,3): error TS7031: Binding element 'selectedSetId' implicitly has an 'any' type.
+src/App.tsx(3906,3): error TS7031: Binding element 'setSelectedSetId' implicitly has an 'any' type.
+src/App.tsx(3907,3): error TS7031: Binding element 'activeSet' implicitly has an 'any' type.
+src/App.tsx(3908,3): error TS7031: Binding element 'studentName' implicitly has an 'any' type.
+src/App.tsx(3909,3): error TS6133: 'setStudentName' is declared but its value is never read.
+src/App.tsx(3909,3): error TS7031: Binding element 'setStudentName' implicitly has an 'any' type.
+src/App.tsx(3910,3): error TS7031: Binding element 'studentCode' implicitly has an 'any' type.
+src/App.tsx(3911,3): error TS7031: Binding element 'setStudentCode' implicitly has an 'any' type.
+src/App.tsx(3912,3): error TS7031: Binding element 'studentClass' implicitly has an 'any' type.
+src/App.tsx(3913,3): error TS7031: Binding element 'isStudentVerified' implicitly has an 'any' type.
+src/App.tsx(3914,3): error TS7031: Binding element 'verifyStudentCode' implicitly has an 'any' type.
+src/App.tsx(3915,3): error TS7031: Binding element 'activeStudyMode' implicitly has an 'any' type.
+src/App.tsx(3916,3): error TS7031: Binding element 'setActiveStudyMode' implicitly has an 'any' type.
+src/App.tsx(3917,3): error TS7031: Binding element 'handleSaveScore' implicitly has an 'any' type.
+src/App.tsx(3918,3): error TS7031: Binding element 'latestScoreData' implicitly has an 'any' type.
+src/App.tsx(3933,4): error TS7006: Parameter 'test' implicitly has an 'any' type.
+src/App.tsx(3948,40): error TS7006: Parameter 'question' implicitly has an 'any' type.
+src/App.tsx(3948,50): error TS7006: Parameter 'index' implicitly has an 'any' type.
+src/App.tsx(3949,34): error TS7053: Element implicitly has an 'any' type because expression of type 'any' can't be used to index type '{}'.
+src/App.tsx(3956,45): error TS7006: Parameter 'item' implicitly has an 'any' type.
+src/App.tsx(3967,20): error TS2345: Argument of type '{ answerDetails: any; score: any; total: any; percentage: number; testId: any; testTitle: any; }' is not assignable to parameter of type 'SetStateAction<null>'.
+  Type '{ answerDetails: any; score: any; total: any; percentage: number; testId: any; testTitle: any; }' provides no match for the signature '(prevState: null): null'.
+src/App.tsx(4012,46): error TS7006: Parameter 'test' implicitly has an 'any' type.
+src/App.tsx(4015,18): error TS7006: Parameter 'set' implicitly has an 'any' type.
+src/App.tsx(4026,31): error TS7006: Parameter 'test' implicitly has an 'any' type.
+src/App.tsx(4029,24): error TS7006: Parameter 'set' implicitly has an 'any' type.
+src/App.tsx(4030,18): error TS7006: Parameter 'test' implicitly has an 'any' type.
+src/App.tsx(4206,20): error TS7006: Parameter 'set' implicitly has an 'any' type.
+src/App.tsx(4249,8): error TS7006: Parameter 'test' implicitly has an 'any' type.
+src/App.tsx(4258,14): error TS7006: Parameter 'test' implicitly has an 'any' type.
+src/App.tsx(4260,17): error TS7006: Parameter 'test' implicitly has an 'any' type.
+src/App.tsx(4446,118): error TS7006: Parameter '_' implicitly has an 'any' type.
+src/App.tsx(4446,120): error TS7006: Parameter 'i' implicitly has an 'any' type.
+src/App.tsx(4446,133): error TS7053: Element implicitly has an 'any' type because expression of type 'any' can't be used to index type '{}'.
+src/App.tsx(4446,296): error TS7006: Parameter 'question' implicitly has an 'any' type.
+src/App.tsx(4446,306): error TS7006: Parameter 'index' implicitly has an 'any' type.
+src/App.tsx(4460,41): error TS7006: Parameter 'option' implicitly has an 'any' type.
+src/App.tsx(4460,49): error TS7006: Parameter 'optionIndex' implicitly has an 'any' type.
+src/App.tsx(4461,38): error TS7053: Element implicitly has an 'any' type because expression of type 'any' can't be used to index type '{}'.
+src/App.tsx(4491,24): error TS7053: Element implicitly has an 'any' type because expression of type 'any' can't be used to index type '{}'.
+src/App.tsx(4504,44): error TS7053: Element implicitly has an 'any' type because expression of type 'any' can't be used to index type '{}'.
+src/App.tsx(4529,37): error TS2339: Property 'score' does not exist on type 'never'.
+src/App.tsx(4529,60): error TS2339: Property 'total' does not exist on type 'never'.
+src/App.tsx(4532,43): error TS2339: Property 'percentage' does not exist on type 'never'.
+src/App.tsx(4553,28): error TS7031: Binding element 'studentCode' implicitly has an 'any' type.
+src/App.tsx(4553,41): error TS7031: Binding element 'db' implicitly has an 'any' type.
+src/App.tsx(4553,45): error TS7031: Binding element 'appId' implicitly has an 'any' type.
+src/App.tsx(4553,52): error TS7031: Binding element 'onBack' implicitly has an 'any' type.
+src/App.tsx(4607,13): error TS2345: Argument of type '{ id: string; }[]' is not assignable to parameter of type 'SetStateAction<never[]>'.
+  Type '{ id: string; }[]' is not assignable to type 'never[]'.
+    Type '{ id: string; }' is not assignable to type 'never'.
+src/App.tsx(4613,13): error TS2345: Argument of type '{ id: string; }[]' is not assignable to parameter of type 'SetStateAction<never[]>'.
+  Type '{ id: string; }[]' is not assignable to type 'never[]'.
+    Type '{ id: string; }' is not assignable to type 'never'.
+src/App.tsx(4617,24): error TS2339: Property 'createdAt' does not exist on type '{ id: string; }'.
+src/App.tsx(4617,39): error TS2339: Property 'date' does not exist on type '{ id: string; }'.
+src/App.tsx(4618,26): error TS2339: Property 'createdAt' does not exist on type '{ id: string; }'.
+src/App.tsx(4618,41): error TS2339: Property 'date' does not exist on type '{ id: string; }'.
+src/App.tsx(4643,38): error TS2339: Property 'attempts' does not exist on type 'never'.
+src/App.tsx(4649,24): error TS2339: Property 'bestPercentage' does not exist on type 'never'.
+src/App.tsx(4650,19): error TS2339: Property 'bestPercentage' does not exist on type 'never'.
+src/App.tsx(4656,14): error TS2339: Property 'lastAttemptAt' does not exist on type 'never'.
+src/App.tsx(4656,33): error TS2339: Property 'timestamp' does not exist on type 'never'.
+src/App.tsx(4657,16): error TS2339: Property 'lastAttemptAt' does not exist on type 'never'.
+src/App.tsx(4657,35): error TS2339: Property 'timestamp' does not exist on type 'never'.
+src/App.tsx(4662,53): error TS2339: Property 'mode' does not exist on type 'never'.
+src/App.tsx(4665,38): error TS2339: Property 'attempts' does not exist on type 'never'.
+src/App.tsx(4672,44): error TS2339: Property 'lastPercentage' does not exist on type 'never'.
+src/App.tsx(4681,22): error TS7006: Parameter 'mode' implicitly has an 'any' type.
+src/App.tsx(4689,12): error TS7053: Element implicitly has an 'any' type because expression of type 'any' can't be used to index type '{ quiz: string; matching: string; spelling: string; flashcards: string; }'.
+src/App.tsx(4693,14): error TS2339: Property 'date' does not exist on type 'never'.
+src/App.tsx(4693,49): error TS2339: Property 'date' does not exist on type 'never'.
+src/App.tsx(4698,23): error TS2339: Property 'date' does not exist on type 'never'.
+src/App.tsx(4700,10): error TS7053: Element implicitly has an 'any' type because expression of type 'any' can't be used to index type '{}'.
+src/App.tsx(4701,7): error TS7053: Element implicitly has an 'any' type because expression of type 'any' can't be used to index type '{}'.
+src/App.tsx(4708,5): error TS7053: Element implicitly has an 'any' type because expression of type 'any' can't be used to index type '{}'.
+src/App.tsx(4708,39): error TS2339: Property 'lastPercentage' does not exist on type 'never'.
+src/App.tsx(4709,5): error TS7053: Element implicitly has an 'any' type because expression of type 'any' can't be used to index type '{}'.
+src/App.tsx(4715,5): error TS2698: Spread types may only be created from object types.
+src/App.tsx(4716,25): error TS18046: 'item' is of type 'unknown'.
+src/App.tsx(4716,38): error TS18046: 'item' is of type 'unknown'.
+src/App.tsx(4759,32): error TS2339: Property 'id' does not exist on type 'never'.
+src/App.tsx(4761,71): error TS2339: Property 'testTitle' does not exist on type 'never'.
+src/App.tsx(4763,29): error TS2339: Property 'setTitle' does not exist on type 'never'.
+src/App.tsx(4763,63): error TS2339: Property 'date' does not exist on type 'never'.
+src/App.tsx(4763,83): error TS2339: Property 'createdAt' does not exist on type 'never'.
+src/App.tsx(4767,27): error TS2339: Property 'score' does not exist on type 'never'.
+src/App.tsx(4767,45): error TS2339: Property 'total' does not exist on type 'never'.
+src/App.tsx(4767,65): error TS2339: Property 'percentage' does not exist on type 'never'.
+src/App.tsx(4807,35): error TS2339: Property 'bestPercentage' does not exist on type 'never'.
+src/App.tsx(4812,31): error TS2339: Property 'setTitle' does not exist on type 'never'.
+src/App.tsx(4821,37): error TS2339: Property 'lastPercentage' does not exist on type 'never'.
+src/App.tsx(4826,33): error TS2339: Property 'setTitle' does not exist on type 'never'.
+src/App.tsx(4932,31): error TS2339: Property 'id' does not exist on type 'never'.
+src/App.tsx(4938,33): error TS2339: Property 'setTitle' does not exist on type 'never'.
+src/App.tsx(4941,43): error TS2339: Property 'mode' does not exist on type 'never'.
+src/App.tsx(4944,39): error TS2339: Property 'date' does not exist on type 'never'.
+src/App.tsx(4944,70): error TS2339: Property 'attempts' does not exist on type 'never'.
+src/App.tsx(4950,43): error TS2339: Property 'lastPercentage' does not exist on type 'never'.
+src/App.tsx(4953,43): error TS2339: Property 'bestPercentage' does not exist on type 'never'.
+src/App.tsx(4968,22): error TS7031: Binding element 'title' implicitly has an 'any' type.
+src/App.tsx(4968,29): error TS7031: Binding element 'desc' implicitly has an 'any' type.
+src/App.tsx(4968,35): error TS7031: Binding element 'icon' implicitly has an 'any' type.
+src/App.tsx(4968,41): error TS7031: Binding element 'color' implicitly has an 'any' type.
+src/App.tsx(4968,48): error TS7031: Binding element 'onClick' implicitly has an 'any' type.
+src/App.tsx(4984,28): error TS7031: Binding element 'term' implicitly has an 'any' type.
+src/App.tsx(4998,10): error TS6133: 'FlashcardMode' is declared but its value is never read.
+src/App.tsx(4998,26): error TS7031: Binding element 'activeSet' implicitly has an 'any' type.
+src/App.tsx(4998,37): error TS7031: Binding element 'onBack' implicitly has an 'any' type.
+src/App.tsx(5020,19): error TS2339: Property 'index' does not exist on type 'never'.
+src/App.tsx(5021,23): error TS2339: Property 'isFlipped' does not exist on type 'never'.
+src/App.tsx(5142,10): error TS6133: 'QuizMode' is declared but its value is never read.
+src/App.tsx(5142,21): error TS7031: Binding element 'activeSet' implicitly has an 'any' type.
+src/App.tsx(5142,32): error TS7031: Binding element 'onFinish' implicitly has an 'any' type.
+src/App.tsx(5142,42): error TS7031: Binding element 'onBack' implicitly has an 'any' type.
+src/App.tsx(5162,38): error TS2345: Argument of type 'null' is not assignable to parameter of type 'number | undefined'.
+src/App.tsx(5180,18): error TS7006: Parameter 't' implicitly has an 'any' type.
+src/App.tsx(5181,15): error TS7006: Parameter 't' implicitly has an 'any' type.
+src/App.tsx(5190,18): error TS7006: Parameter 't' implicitly has an 'any' type.
+src/App.tsx(5191,15): error TS7006: Parameter 't' implicitly has an 'any' type.
+src/App.tsx(5198,7): error TS2345: Argument of type 'any[]' is not assignable to parameter of type 'SetStateAction<never[]>'.
+  Type 'any[]' is not assignable to type 'never[]'.
+    Type 'any' is not assignable to type 'never'.
+src/App.tsx(5266,28): error TS7006: Parameter 'type' implicitly has an 'any' type.
+src/App.tsx(5267,18): error TS2345: Argument of type 'null' is not assignable to parameter of type 'number | undefined'.
+src/App.tsx(5285,29): error TS7006: Parameter 'opt' implicitly has an 'any' type.
+src/App.tsx(5297,46): error TS2345: Argument of type 'any' is not assignable to parameter of type 'never'.
+src/App.tsx(5300,21): error TS2345: Argument of type '(prev: never[]) => any[]' is not assignable to parameter of type 'SetStateAction<never[]>'.
+  Type '(prev: never[]) => any[]' is not assignable to type '(prevState: never[]) => never[]'.
+    Type 'any[]' is not assignable to type 'never[]'.
+      Type 'any' is not assignable to type 'never'.
+src/App.tsx(5311,19): error TS2345: Argument of type '(prev: never[]) => any[]' is not assignable to parameter of type 'SetStateAction<never[]>'.
+  Type '(prev: never[]) => any[]' is not assignable to type '(prevState: never[]) => never[]'.
+    Type 'any[]' is not assignable to type 'never[]'.
+      Type 'any' is not assignable to type 'never'.
+src/App.tsx(5316,18): error TS2345: Argument of type 'null' is not assignable to parameter of type 'number | undefined'.
+src/App.tsx(5317,5): error TS2322: Type 'number' is not assignable to type 'null'.
+src/App.tsx(5326,16): error TS2345: Argument of type 'null' is not assignable to parameter of type 'number | undefined'.
+src/App.tsx(5392,28): error TS2345: Argument of type 'null' is not assignable to parameter of type 'number | undefined'.
+src/App.tsx(5393,41): error TS2339: Property 'quizType' does not exist on type 'never'.
+src/App.tsx(5394,46): error TS2339: Property 'questionQueue' does not exist on type 'never'.
+src/App.tsx(5395,43): error TS2339: Property 'retryQueue' does not exist on type 'never'.
+src/App.tsx(5396,45): error TS2339: Property 'currentIndex' does not exist on type 'never'.
+src/App.tsx(5397,46): error TS2339: Property 'firstTryScore' does not exist on type 'never'.
+src/App.tsx(5398,45): error TS2339: Property 'attemptedIds' does not exist on type 'never'.
+src/App.tsx(5399,47): error TS2339: Property 'selectedOption' does not exist on type 'never'.
+src/App.tsx(5400,43): error TS2339: Property 'isAnswered' does not exist on type 'never'.
+src/App.tsx(5401,40): error TS2339: Property 'options' does not exist on type 'never'.
+src/App.tsx(5402,42): error TS2339: Property 'startTime' does not exist on type 'never'.
+src/App.tsx(5414,28): error TS2345: Argument of type 'null' is not assignable to parameter of type 'number | undefined'.
+src/App.tsx(5782,10): error TS6133: 'MatchingMode' is declared but its value is never read.
+src/App.tsx(5782,25): error TS7031: Binding element 'activeSet' implicitly has an 'any' type.
+src/App.tsx(5782,36): error TS7031: Binding element 'onFinish' implicitly has an 'any' type.
+src/App.tsx(5782,46): error TS7031: Binding element 'onBack' implicitly has an 'any' type.
+src/App.tsx(5785,25): error TS7006: Parameter 'array' implicitly has an 'any' type.
+src/App.tsx(5831,28): error TS2339: Property 'remainingTerms' does not exist on type 'never'.
+src/App.tsx(5832,24): error TS2339: Property 'roundTerms' does not exist on type 'never'.
+src/App.tsx(5833,19): error TS2339: Property 'cards' does not exist on type 'never'.
+src/App.tsx(5834,27): error TS2339: Property 'selectedFirst' does not exist on type 'never'.
+src/App.tsx(5835,24): error TS2339: Property 'matchedIds' does not exist on type 'never'.
+src/App.tsx(5836,26): error TS2339: Property 'completedIds' does not exist on type 'never'.
+src/App.tsx(5837,25): error TS2339: Property 'roundNumber' does not exist on type 'never'.
+src/App.tsx(5848,107): error TS2339: Property 'termId' does not exist on type 'never'.
+src/App.tsx(5869,14): error TS2345: Argument of type 'any[]' is not assignable to parameter of type 'SetStateAction<never[]>'.
+  Type 'any[]' is not assignable to type 'never[]'.
+    Type 'any' is not assignable to type 'never'.
+src/App.tsx(5877,27): error TS7006: Parameter 'newCompletedIds' implicitly has an 'any' type.
+src/App.tsx(5906,28): error TS7006: Parameter 'card' implicitly has an 'any' type.
+src/App.tsx(5908,29): error TS2345: Argument of type 'any' is not assignable to parameter of type 'never'.
+src/App.tsx(5911,24): error TS2339: Property 'id' does not exist on type 'never'.
+src/App.tsx(5924,21): error TS2339: Property 'termId' does not exist on type 'never'.
+src/App.tsx(5925,21): error TS2339: Property 'type' does not exist on type 'never'.
+src/App.tsx(5934,21): error TS2345: Argument of type 'any[]' is not assignable to parameter of type 'SetStateAction<never[]>'.
+  Type 'any[]' is not assignable to type 'never[]'.
+    Type 'any' is not assignable to type 'never'.
+src/App.tsx(6076,33): error TS2345: Argument of type 'any' is not assignable to parameter of type 'never'.
+src/App.tsx(6076,38): error TS2339: Property 'termId' does not exist on type 'never'.
+src/App.tsx(6079,28): error TS2339: Property 'id' does not exist on type 'never'.
+src/App.tsx(6079,40): error TS2339: Property 'id' does not exist on type 'never'.
+src/App.tsx(6084,27): error TS2339: Property 'id' does not exist on type 'never'.
+src/App.tsx(6096,25): error TS2339: Property 'id' does not exist on type 'never'.
+src/App.tsx(6104,21): error TS2339: Property 'text' does not exist on type 'never'.
+src/App.tsx(6132,10): error TS6133: 'SpellingMode' is declared but its value is never read.
+src/App.tsx(6132,25): error TS7031: Binding element 'activeSet' implicitly has an 'any' type.
+src/App.tsx(6132,36): error TS7031: Binding element 'onFinish' implicitly has an 'any' type.
+src/App.tsx(6132,46): error TS7031: Binding element 'onBack' implicitly has an 'any' type.
+src/App.tsx(6145,38): error TS2345: Argument of type 'null' is not assignable to parameter of type 'number | undefined'.
+src/App.tsx(6164,27): error TS2339: Property 'questionQueue' does not exist on type 'never'.
+src/App.tsx(6165,24): error TS2339: Property 'retryQueue' does not exist on type 'never'.
+src/App.tsx(6166,19): error TS2339: Property 'index' does not exist on type 'never'.
+src/App.tsx(6167,19): error TS2339: Property 'input' does not exist on type 'never'.
+src/App.tsx(6168,19): error TS2339: Property 'score' does not exist on type 'never'.
+src/App.tsx(6169,26): error TS2339: Property 'attemptedIds' does not exist on type 'never'.
+src/App.tsx(6170,22): error TS2339: Property 'feedback' does not exist on type 'never'.
+src/App.tsx(6171,26): error TS2339: Property 'isRetryRound' does not exist on type 'never'.
+src/App.tsx(6186,28): error TS7006: Parameter 'wasCorrect' implicitly has an 'any' type.
+src/App.tsx(6187,18): error TS2345: Argument of type 'null' is not assignable to parameter of type 'number | undefined'.
+src/App.tsx(6196,21): error TS2345: Argument of type 'any[]' is not assignable to parameter of type 'SetStateAction<never[]>'.
+  Type 'any[]' is not assignable to type 'never[]'.
+    Type 'any' is not assignable to type 'never'.
+src/App.tsx(6218,25): error TS7006: Parameter 'e' implicitly has an 'any' type.
+src/App.tsx(6225,48): error TS2345: Argument of type 'any' is not assignable to parameter of type 'never'.
+src/App.tsx(6227,40): error TS2345: Argument of type '(prev: never[]) => any[]' is not assignable to parameter of type 'SetStateAction<never[]>'.
+  Type '(prev: never[]) => any[]' is not assignable to type '(prevState: never[]) => never[]'.
+    Type 'any[]' is not assignable to type 'never[]'.
+      Type 'any' is not assignable to type 'never'.
+src/App.tsx(6231,19): error TS2345: Argument of type '"correct"' is not assignable to parameter of type 'SetStateAction<null>'.
+src/App.tsx(6233,7): error TS2322: Type 'number' is not assignable to type 'null'.
+src/App.tsx(6258,19): error TS2345: Argument of type '"incorrect"' is not assignable to parameter of type 'SetStateAction<null>'.
+src/App.tsx(6370,29): error TS7031: Binding element 'scoreData' implicitly has an 'any' type.
+src/App.tsx(6370,40): error TS7031: Binding element 'onRestart' implicitly has an 'any' type.
+src/App.tsx(6370,51): error TS7031: Binding element 'onBack' implicitly has an 'any' type.

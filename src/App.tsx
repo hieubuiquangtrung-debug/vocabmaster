@@ -1,4 +1,7 @@
 // @ts-nocheck
+import './teacher-results.css';
+import TestNavigation from './TestNavigation';
+import './rainbow-grammar.css';
 import './magical-world.css';
 import './teacher-studio.css';
 import './teacher-pro.css';
@@ -1218,42 +1221,8 @@ const activeSet =
     }
   ]);
 };
-const handleTermImageUpload = async (termId, file) => {
-  if (!file) return;
-
-  if (!file.type.startsWith('image/')) {
-    alert('Vui lòng chọn file ảnh.');
-    return;
-  }
-
-  if (file.size > 5 * 1024 * 1024) {
-    alert('Ảnh không được lớn hơn 5MB.');
-    return;
-  }
-
-  try {
-    const safeFileName = file.name.replace(/[^a-zA-Z0-9._-]/g, '_');
-
-    const imageRef = ref(
-      storage,
-      `vocab-images/${user?.uid || 'teacher'}/${Date.now()}-${safeFileName}`
-    );
-
-    await uploadBytes(imageRef, file);
-
-    const imageUrl = await getDownloadURL(imageRef);
-
-    setTerms((prev) =>
-      prev.map((term) =>
-        term.id === termId
-          ? { ...term, imageUrl }
-          : term
-      )
-    );
-  } catch (error) {
-    console.error('Image upload error:', error);
-    alert('Không thể tải ảnh lên. Vui lòng thử lại.');
-  }
+const handleTermImageUpload = (_termId: string, file: File) => {
+  if (file) alert('Tải ảnh trực tiếp chưa được cấu hình. Vui lòng dán link ảnh vào ô bên dưới.');
 };
   const handleTermChange = (id, field, value) => {
     setTerms(terms.map(t => t.id === id ? { ...t, [field]: value } : t));
@@ -1496,6 +1465,7 @@ const setPayload = {
     teacherPassword={teacherPassword}
     setTeacherPassword={setTeacherPassword}
     teacherLoginError={teacherLoginError}
+    setTeacherLoginError={setTeacherLoginError}
     handleTeacherLogin={handleTeacherLogin}
     setMode={setMode}
   />
@@ -1619,53 +1589,10 @@ function TeacherLogin({
   teacherPassword,
   setTeacherPassword,
   teacherLoginError,
+  setTeacherLoginError,
   handleTeacherLogin,
   setMode
 }) {
-  const handleToggleResult = (resultId: string) => {
-  setSelectedResultIds((prev) =>
-    prev.includes(resultId)
-      ? prev.filter((id) => id !== resultId)
-      : [...prev, resultId]
-  );
-};
-
-const handleDeleteSelectedResults = async () => {
-  if (selectedResultIds.length === 0) {
-    alert('Vui lòng chọn ít nhất một kết quả!');
-    return;
-  }
-
-  const confirmed = window.confirm(
-    `Bạn có chắc muốn xóa ${selectedResultIds.length} kết quả đã chọn không?`
-  );
-
-  if (!confirmed) return;
-
-  try {
-    await Promise.all(
-      selectedResultIds.map((resultId) =>
-        deleteDoc(
-          doc(
-            db,
-            'artifacts',
-            appId,
-            'public',
-            'data',
-            'vocab_results',
-            resultId
-          )
-        )
-      )
-    );
-
-    setSelectedResultIds([]);
-    alert('Đã xóa các kết quả đã chọn!');
-  } catch (error) {
-    console.error('Error deleting results:', error);
-    alert('Không thể xóa kết quả. Hãy kiểm tra Firestore Rules.');
-  }
-};
   return (
     <div className="max-w-md mx-auto mt-16">
       <div className="bg-white rounded-2xl shadow-xl border border-slate-200 p-8">
@@ -1782,7 +1709,7 @@ function TeacherDashboard({
   setIsImportingVocabulary,
   importedTerms,
   setImportedTerms,
-    VocabImportError,
+    vocabImportError,
     setVocabImportError,
   copyShareLink,
   copiedLink,
@@ -2401,9 +2328,9 @@ const handleDeleteSelectedResults = async () => {
     />
   </label>
 </div>
-{VocabImportError && (
+{vocabImportError && (
   <div className="p-4 rounded-xl bg-rose-50 border border-rose-200 text-rose-700 text-sm font-semibold">
-    ⚠️ {VocabImportError}
+    ⚠️ {vocabImportError}
   </div>
 )}
 
@@ -3339,71 +3266,13 @@ const handleDeleteSelectedResults = async () => {
   Xóa kết quả đã chọn ({selectedResultIds.length})
 </button>
 </div>
-                <table className="w-full table-fixed text-left text-xs sm:text-sm">
-                  <colgroup>
-  <col className="w-[5%]" />
-  <col className="w-[14%]" />
-  <col className="w-[11%]" />
-  <col className="w-[10%]" />
-  <col className="w-[13%]" />
-  <col className="w-[11%]" />
-  <col className="w-[9%]" />
-  <col className="w-[10%]" />
-  <col className="w-[10%]" />
-  <col className="w-[9%]" />
-  <col className="w-[12%]" />
-</colgroup>
-                  <thead className="bg-slate-100 text-slate-600 font-semibold uppercase tracking-wider border-b border-slate-200">
-  <tr>
-    <th className="py-3 px-4 text-center w-14">
-      Chọn
-    </th>
-
-    <th className="py-3 px-4">
-      Học Sinh
-    </th>
-
-    <th className="py-3 px-4">
-      Mã HS
-    </th>
-
-    <th className="py-3 px-4">
-      Lớp
-    </th>
-
-    <th className="py-3 px-4">
-      Bộ Từ Vựng
-    </th>
-
-    <th className="py-3 px-4">
-      Chế Độ
-    </th>
-
-    <th className="py-3 px-4 text-center">
-      Số Lần Làm
-    </th>
-
-    <th className="py-3 px-4 text-center">
-      Điểm Cao Nhất
-    </th>
-
-    <th className="py-3 px-4 text-center">
-      Điểm Gần Nhất
-    </th>
-
-    <th className="py-3 px-4 text-center">
-      Tỷ Lệ Cao Nhất
-    </th>
-
-    <th className="py-3 px-4 text-right">
-      Thời Gian
-    </th>
-  </tr>
-</thead>
+<div className="vm-results-scroll" tabIndex={0} aria-label="Bảng kết quả học tập">                <table className="vm-results-table">
+                  <colgroup><col style={{width: "8%"}} /><col style={{width: "18%"}} /><col style={{width: "20%"}} /><col style={{width: "12%"}} /><col style={{width: "6%"}} /><col style={{width: "9%"}} /><col style={{width: "9%"}} /><col style={{width: "8%"}} /><col style={{width: "10%"}} /></colgroup>
+<thead className="vm-results-head"><tr><th scope="col">Chọn</th><th scope="col">Học sinh</th><th scope="col">Bộ từ vựng</th><th scope="col">Chế độ</th><th scope="col">Lượt</th><th scope="col">Cao nhất</th><th scope="col">Gần nhất</th><th scope="col">Tỷ lệ</th><th scope="col">Thời gian</th></tr></thead>
                   <tbody className="divide-y divide-slate-100">
                     {filteredResults.length === 0 ? (
                       <tr>
-                        <td colSpan="11" className="py-8 text-center text-slate-400">
+                        <td colSpan={9} className="py-8 text-center text-slate-400">
                           Chưa có kết quả nộp bài nào từ học sinh.
                         </td>
                       </tr>
@@ -3434,32 +3303,15 @@ const handleDeleteSelectedResults = async () => {
     }}
     aria-label={`Chọn kết quả của ${r.studentName || 'học sinh'}`}
   />
+  <span className="vm-results-index">{idx + 1}</span>
 </td>
-                            <td className="py-3 px-4 font-bold text-slate-800 flex items-center gap-2">
-                            <span className={`w-6 h-6 rounded-full flex items-center justify-center text-xs text-white font-extrabold ${
-                              idx === 0 ? 'bg-amber-400' : idx === 1 ? 'bg-slate-400' : idx === 2 ? 'bg-amber-700' : 'bg-slate-200 text-slate-600'
-                            }`}>
-                              {idx + 1}
-                            </span>
-                            {r.studentName || 'Chưa xác định'}
-</td>
-
-{/* Mã học sinh */}
-<td className="py-3 px-4 text-slate-600">
-  {r.studentCode || '—'}
-</td>
-
-{/* Lớp */}
-<td className="py-3 px-4 text-slate-600">
-  {r.studentClass || '—'}
-</td>
-
+                            <td><div className="vm-results-name">{r.studentName || 'Chưa xác định'}</div><div className="vm-results-class">{r.studentClass || '—'}</div></td>
 {/* Bộ từ vựng */}
 <td className="py-3 px-4 text-slate-600">
   {r.setTitle}
 </td>
                           <td className="py-3 px-4">
-                            <span className="capitalize px-2 py-0.5 rounded bg-indigo-50 text-indigo-700 font-medium text-xs">
+                            <span className={`vm-results-mode ${r.mode === "quiz" ? "quiz" : r.mode === "matching" ? "matching" : r.mode === "spelling" ? "spelling" : "flashcards"}`}>
                               {r.mode === 'quiz' ? 'Trắc nghiệm' : r.mode === 'matching' ? 'Nối từ' : r.mode === 'spelling' ? 'Chính tả' : 'Thẻ nhớ'}
                             </span>
                           </td>
@@ -3470,11 +3322,11 @@ const handleDeleteSelectedResults = async () => {
 </td>
 
 {/* Điểm cao nhất */}
-<td className="py-3 px-4 text-center font-semibold text-slate-800">
+<td className="vm-results-score">
   {r.bestScore ?? r.score ?? 0} / {r.bestTotal ?? r.total ?? 0}
 </td>
 {/* Điểm lần gần nhất */}
-<td className="py-3 px-4 text-center font-semibold text-slate-800">
+<td className="vm-results-score">
   {r.lastScore ?? r.score ?? 0} / {r.lastTotal ?? r.total ?? 0}
 </td>
                           <td className="py-3 px-4 text-center">
@@ -3485,7 +3337,7 @@ const handleDeleteSelectedResults = async () => {
                              {r.bestPercentage ?? r.percentage ?? 0}%
                             </span>
                           </td>
-                          <td className="py-3 px-4 text-right text-slate-400 text-xs">
+                          <td className="vm-results-time">
                             {(r.lastAttemptAt || r.timestamp)
   ? new Date(r.lastAttemptAt || r.timestamp).toLocaleString('vi-VN')
   : 'Vừa xong'}
@@ -3494,7 +3346,7 @@ const handleDeleteSelectedResults = async () => {
                       ))
                     )}
                   </tbody>
-                </table>
+                </table></div>
               </div>
             </div>
           ) : (
@@ -3533,9 +3385,9 @@ const handleDeleteSelectedResults = async () => {
     )}
   </div>
 
-  {VocabImportError && (
+  {vocabImportError && (
     <div className="p-3 rounded-xl bg-amber-50 border border-amber-200 text-amber-800 text-sm">
-      {VocabImportError}
+      {vocabImportError}
     </div>
   )}
 
@@ -4441,9 +4293,9 @@ const isCorrect = correctAnswer
           </div>
         </div>
 
-        {selectedTest.questions?.map((question, index) => (
+        <div className="vm-test-layout"><TestNavigation prefix="assigned-q-" done={(selectedTest.questions||[]).map((_,i)=>!!String(testAnswers[i]||'').trim())} onSubmit={()=>void handleSubmitAssignedTest()} submitted={testSubmitted}/><div className="vm-test-main">{selectedTest.questions?.map((question, index) => (
           <div
-            key={index}
+            key={index} id={'assigned-q-'+index}
             className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm transition hover:border-violet-200 hover:shadow-md sm:p-6"
           >
             <div className="mb-4 flex items-start gap-3">
@@ -4513,14 +4365,7 @@ const isCorrect = correctAnswer
           </div>
         ))}
 
-        {!testSubmitted ? (
-          <button
-            onClick={handleSubmitAssignedTest}
-            className="w-full rounded-xl bg-blue-600 px-4 py-3 font-bold text-white"
-          >
-            Nộp bài và xem điểm
-          </button>
-        ) : (
+        {testSubmitted && (
           <div className="rounded-xl border p-4 text-center">
             <h3 className="text-lg font-bold">Kết quả bài kiểm tra</h3>
             <p>
@@ -4531,7 +4376,7 @@ const isCorrect = correctAnswer
             </p>
           </div>
         )}
-      </>
+      </div></div></>
     ) : (
       <p>Không tìm thấy bài kiểm tra.</p>
     )}
